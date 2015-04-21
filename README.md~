@@ -18,6 +18,12 @@ I usually use KTikz to get eps, pdf, and pgn figures from this.
         >>> f.writepgf('test.pgf')
 
  This generates the file 'test.pgf' containing a Tikz figure of a hyperbolic triangle.
+ Viewing this in KTikz one can get a png,eps, or pdf file.
+ 
+ ![test.pgn](/test.png)
+Format: ![Alt Text](url)
+ 
+ 
  You can easily change the color of segments or points by changing the color attribute.
  For example:
         >>> s1 = Segment(p1,p2)
@@ -31,8 +37,16 @@ I usually use KTikz to get eps, pdf, and pgn figures from this.
 
  Generates a similar Tikz figure but with colored edges.
 
+ ![test2.pgn](/test2.png)
+Format: ![Alt Text](url)
+
+
  Obviously things get more interesting when you use Python to generate the figure proceeduraly.
  An example of this can be obtained by calling shiqz(100) which generates a file 'shiqz.pgf'.
+ 
+  ![shiqz.pgn](/shiqz.png)
+Format: ![Alt Text](url)
+
  
  So far I have 3 types of drawable objects, Point, Segment, and Figure.
  A Figure is a subclass of Set and is pretty much just a set of Points, Segments and possibly other Figures.
@@ -78,6 +92,9 @@ I usually use KTikz to get eps, pdf, and pgn figures from this.
 
  In the resulting figure the colored triangle is translated (with respect to test2.pgf)
  and a black point appears in its (hyperbolic) center.
+
+ ![test.pgn](/test3.png)
+Format: ![Alt Text](url)
 
 
 

@@ -21,7 +21,6 @@ I usually use KTikz to get eps, pdf, and pgn figures from this.
  Viewing this in KTikz one can get a png,eps, or pdf file.
  
  ![test.pgn](/test.png)
-Format: ![Alt Text](url)
  
  
  You can easily change the color of segments or points by changing the color attribute.
@@ -38,14 +37,14 @@ Format: ![Alt Text](url)
  Generates a similar Tikz figure but with colored edges.
 
  ![test2.pgn](/test2.png)
-Format: ![Alt Text](url)
 
 
  Obviously things get more interesting when you use Python to generate the figure proceeduraly.
  An example of this can be obtained by calling shiqz(100) which generates a file 'shiqz.pgf'.
+
+        >>> shiqz(100)
  
   ![shiqz.pgn](/shiqz.png)
-Format: ![Alt Text](url)
 
  
  So far I have 3 types of drawable objects, Point, Segment, and Figure.
@@ -58,7 +57,7 @@ Format: ![Alt Text](url)
  Point.fromupper(complex)    constructs from a point in the upper half plane (complex number)
  Point.fromtangent(tangent) constructs from a unit tangent vector (more later)
 
- Segments can so far only be constructed from two points.  Al segments are of finite hyperoblic length.
+ Segments can so far only be constructed from two points.  All segments are of finite hyperoblic length.
  There are so far no half lines or lines but I plan to add classes for them later (good for drawings of
  of the modular group for example).  Also a Circle class would be nice.
 
@@ -94,7 +93,6 @@ Format: ![Alt Text](url)
  and a black point appears in its (hyperbolic) center.
 
  ![test.pgn](/test3.png)
-Format: ![Alt Text](url)
 
 
 
