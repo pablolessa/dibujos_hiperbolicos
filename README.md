@@ -25,6 +25,7 @@ I usually use KTikz to get eps, pdf, and pgn figures from this.
  
  You can easily change the color of segments or points by changing the color attribute.
  For example:
+ 
         >>> s1 = Segment(p1,p2)
         >>> s1.color = 'red'
         >>> s2 = Segment(p2,p3)
