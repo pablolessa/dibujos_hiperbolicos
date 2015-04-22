@@ -158,13 +158,13 @@ class Point(complex):
     def fromtangent(cls,t):
         return Point(matrixtopoint(t))
 
-    def gettikzline(self):
+    def gettikzline(self,diskradius=3):
         if hasattr(self,'color') == False:
             self.color = 'black'
         if hasattr(self,'radius') == False:
-            self.radius = 0.2
-        x = pointtodisk(self)*10
-        size = (self.radius/2)*(100-abs(x)**2)/100
+            self.radius = 0.1
+        x = pointtodisk(self)*diskradius
+        size = (self.radius/2)*(diskradius**2-abs(x)**2)/diskradius**2
         return '\\begin{pgfonlayer}{foreground}\\draw[fill='+self.color+','+self.color+'] '+'({:.3f},{:.3f})'.format(x.real,x.imag)+' circle '+'({:.3f})'.format(size)+';\\end{pgfonlayer}'
 
     def __getattr__(self,attr):
@@ -191,12 +191,12 @@ class Segment():
     def __repr__(self):
         return repr((self.start,self.end))
     
-    def gettikzline(self):
+    def gettikzline(self,diskradius=3):
         if hasattr(self,'color') == False:
             self.color = 'black'
-        subdivisions = int(100*abs(pointtodisk(self.start)-pointtodisk(self.end)))+10
+        subdivisions = int(diskradius*10*abs(pointtodisk(self.start)-pointtodisk(self.end)))+10
         points = [pointtodisk(z) for z in segment(self[0],self[1],subdivisions)]        
-        return '\\begin{pgfonlayer}{background}\\draw['+self.color+'] '+' -- '.join(['({:.3f},{:.3f})'.format(10*x.real,10*x.imag) for x in points])+';\\end{pgfonlayer}'
+        return '\\begin{pgfonlayer}{background}\\draw['+self.color+'] '+' -- '.join(['({:.3f},{:.3f})'.format(diskradius*x.real,diskradius*x.imag) for x in points])+';\\end{pgfonlayer}'
 
     def __getattr__(self,attr):
         if attr=='tikzline':
@@ -220,14 +220,14 @@ class Segment():
     
 
 class Figure(set):
-    def writepgf(self,filename,drawboundary=True):
+    def writepgf(self,filename,drawboundary=True,diskradius=3):
         f = open(filename,'w')
         f.write('\\pgfdeclarelayer{background}\n')
         f.write('\\pgfdeclarelayer{foreground}\n')
         f.write('\\pgfsetlayers{background,foreground}\n')
         f.write('\\begin{tikzpicture}\n')
         if drawboundary:
-            f.write('\\begin{pgfonlayer}{foreground}\\draw (0,0) circle (10);\\end{pgfonlayer}\n')
+            f.write('\\begin{pgfonlayer}{foreground}\\draw (0,0) circle ('+str(diskradius)+');\\end{pgfonlayer}\n')
         for x in self:
             f.write(x.tikzline+'\n')
         f.write('\\end{tikzpicture}\n')
