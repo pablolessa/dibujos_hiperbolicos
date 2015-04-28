@@ -86,7 +86,7 @@ I usually use KTikz to get eps, pdf, and pgn figures from this.
  yields the Tangent representing being at the center of the disk looking right (towards the positive real numbers).  And the
  identity tranformation.
 
- Other tangents can be constructed conveniently form a series of instructions for example:
+ Other tangents can be constructed conveniently from a series of instructions for example:
 
         >>> Tangent.forward(1)*Tangent.rotate(pi/2)*Tangent.forward(2)
  
