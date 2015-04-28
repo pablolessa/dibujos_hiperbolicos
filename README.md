@@ -41,7 +41,7 @@ I usually use KTikz to get eps, pdf, and pgn figures from this.
 
 
  Obviously things get more interesting when you use Python to generate the figure proceeduraly.
- An example of this can be obtained by calling shiqz(100) which generates a file 'shiqz.pgf'.
+ For an example of this inspect the stickmaninmodulargroup() function.
 
         >>> stickmaninmodulargroup()
  
