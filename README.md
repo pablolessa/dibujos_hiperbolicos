@@ -63,14 +63,14 @@ I usually use KTikz to get eps, pdf, and pgn figures from this.
  The Tangent class serves two puposes.   They represent unit tangent vectors and also isometries of the hyperbolic plane.
  The constructor
 
- Tangent.origin()
+        >>> Tangent.origin()
 
  yields the Tangent representing being at the center of the disk looking right (towards the positive real numbers).  And the
  identity tranformation.
 
  Other tangents can be constructed conveniently form a series of instructions for example:
 
- Tangent.forward(1)*Tangent.rotate(pi/2)*Tangent.forward(2)
+        >>> Tangent.forward(1)*Tangent.rotate(pi/2)*Tangent.forward(2)
  
  is the unit tangent vector obtained from Tangent.origin() by going forward along the geodesic flow for 1 unit then turning 
  counter-clockwise a right angle and then moving along the geodesic flow for two units.
@@ -82,9 +82,9 @@ I usually use KTikz to get eps, pdf, and pgn figures from this.
 
  The basepoint of a tangent vector is an attribute.  For example
 
- Tangent.origin().basepoint
-
- returns Point(0).
+        >>> Tangent.origin().basepoint
+ 
+ returns the Point representing the center of the disk.
 
  Tangents also act on Points, Segments, Halflines, Lines, Circles, Disks, and Figures by left multiplication.  They act like the unique
  isometry of the hyperbolic plane taking the tangent vector Tangent.origin() to the given tangent vector.
