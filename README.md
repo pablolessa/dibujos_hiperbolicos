@@ -1,5 +1,5 @@
-# dibujos_hiperbolicos
-A python tool to create drawings in the hyperbolic disk for inclusion in LaTex documents.  
+# Dibujos Hiperbólicos
+A Python tool to create drawings in the hyperbolic disk for inclusion in LaTex documents.  
 The output is a Tikz figure (a .pgf file).  
 I usually use KTikz to get eps, pdf, and pgn figures from this.
 
@@ -43,57 +43,71 @@ I usually use KTikz to get eps, pdf, and pgn figures from this.
  Obviously things get more interesting when you use Python to generate the figure proceeduraly.
  An example of this can be obtained by calling shiqz(100) which generates a file 'shiqz.pgf'.
 
-        >>> shiqz(100)
+        >>> stickmaninmodulargroup()
  
-  ![shiqz.pgn](/shiqz.png)
+  ![test3.pgn](/test3.png)
 
  
- So far I have 3 types of drawable objects, Point, Segment, and Figure.
- A Figure is a subclass of Set and is pretty much just a set of Points, Segments and possibly other Figures.
- It has a special writepgf function.
+ The drawable objects are Tangent, Point, Segment, Halfline, Line, Circle, and Disk.
+ A Figure is a subclass of Set and is pretty much just a set of drawable objects with a writepgf function.
 
- Points represent points in the hyperbolic plane.  At the moment they are complex numbers representing
- the point in the upper half plane model.   But I plan to change that for technical reasons.  I provide several constructors.
+ Points represent points in the hyperbolic plane.  I provide several constructors some examples are:
  Point.frompolar(radius,angle)   constructs from polar coordinates.
  Point.fromupper(complex)    constructs from a point in the upper half plane (complex number)
  Point.fromtangent(tangent) constructs from a unit tangent vector (more later)
 
- Segments can so far only be constructed from two points.  All segments are of finite hyperoblic length.
- There are so far no half lines or lines but I plan to add classes for them later (good for drawings of
- of the modular group for example).  Also a Circle class would be nice.
+ Segments can so far only be constructed from two points.  Halflines and Lines are supposed to be constructed
+ from a Tangent object (a unit tangent vector) whose basepoint is the starting point of the Halfline and just
+ a point on the Line in the other case (its direction indicated the direction of the Halfline or line).
 
- The Tangent class is not drawable.  It is a subclass of numpy.matrix.   The elements are supposed to
- represent unit tangent vectors in the hyperbolic plane and also isometries of the plane.
+ The Tangent class serves two puposes.   They represent unit tangent vectors and also isometries of the hyperbolic plane.
+ The constructor
 
  Tangent.origin()
 
- Is the tangent vector associated to being in the center of the disk looking right.
- One can construct a tangent vector from instructions (like a turtle graphics type thing) as follows:
+ yields the Tangent representing being at the center of the disk looking right (towards the positive real numbers).  And the
+ identity tranformation.
 
-        >>> t = Tangent.frominstructions(startangle=pi/2,forward=1,rotate = -pi/2)
+ Other tangents can be constructed conveniently form a series of instructions for example:
 
- The constructor takes 3 moves to be followed in order (starting at Tangent.origin())
- , the first is rotation angle, the second is how much (hyperbolic distance) to move forward,
- the third is a rotation angle.
+ Tangent.forward(1)*Tangent.rotate(pi/2)*Tangent.forward(2)
+ 
+ is the unit tangent vector obtained from Tangent.origin() by going forward along the geodesic flow for 1 unit then turning 
+ counter-clockwise a right angle and then moving along the geodesic flow for two units.
 
- Any unit tangent vector can be obtained in this way.
+ The tangent vector Tangent.sideways(1) is on the same horocycle of Tangent.origin() and to the right 1 unit (it can also
+ be included in multiplication chains as above). 
 
- You can get the basepoint using the fromtangent constructor of Point.
-        >>> p = Point.fromtangent(t)
+ Any unit tangent vector can be obtained by multiplying those obtained from the given constructors as above.
 
- Tangents also act on Points, Segments, and Figures by left multiplication.  They act like the unique
+ The basepoint of a tangent vector is an attribute.  For example
+
+ Tangent.origin().basepoint
+
+ returns Point(0).
+
+ Tangents also act on Points, Segments, Halflines, Lines, Circles, Disks, and Figures by left multiplication.  They act like the unique
  isometry of the hyperbolic plane taking the tangent vector Tangent.origin() to the given tangent vector.
 
- For example continuing the above examples one might do:
+ As an example consider:
 
-        >>> newfigure = t*g
-        >>> newfigure.add(p)
-        >>> newfigure.writepgf('test3.pgf')
+        >>> stick = stickman(size=0.5)
+        >>> g = Figure()
+        >>> for i in range(-5,6):
+				g.update(Tangent.forward(i)*stick)
+        >>> g.writepgf('test4.pgf')
 
- In the resulting figure the colored triangle is translated (with respect to test2.pgf)
- and a black point appears in its (hyperbolic) center.
+Which generates the following figure:
 
- ![test.pgn](/test3.png)
+ ![test4.pgn](/test4.png)
 
+We provide the generator modulargroup(n) for the ball of radius n in the modular group.  As an example consider:
 
+		>>> g = Figure()
+		>>> stick = Tangent.forward(0.5)*stickman(size=0.3)
+		>>> for t in modulargroup(12):
+				g.update(t*stick)	
+		>>> g.writepgf('test5.pgf')
+
+ ![test5.pgn](/test5.png)
 

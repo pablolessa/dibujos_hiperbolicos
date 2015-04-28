@@ -1,225 +1,151 @@
-## Module for generating drawing in the hyperbolic disk.
-## So far it can generate .pgf files which I open up with KTikz (which in turn can get pgn, eps, and pdf files out of them).
-##
-## Example usage:
-## Open this file in Idle and press f5 (run the interactive interpreter).
-##  >>> p1 = Point.frompolar(radius=1,angle=0)
-##  >>> p2 = Point.frompolar(radius=1,angle = 2*pi/3)
-##  >>> p3 = Point.frompolar(radius=1,angle = -2*pi/3)
-##  >>> f = Figure([p1,p2,p3])
-##  >>> f.add(Segment(p1,p2))
-##  >>> f.add(Segment(p2,p3))
-##  >>> f.add(Segment(p3,p1))
-##  >>> f.writepgf('test.pgf')
-##
-## This generates the file 'test.pgf' containing a Tikz figure of a hyperbolic triangle.
-## You can easily change the color of segments or points by changing the color attribute.
-## For example:
-##        >>> s1 = Segment(p1,p2)
-##        >>> s1.color = 'red'
-##        >>> s2 = Segment(p2,p3)
-##        >>> s2.color = 'orange'
-##        >>> s3 = Segment(p3,p1)
-##        >>> s3.color = 'blue'
-##        >>> g = Figure([p1,p2,p3,s1,s2,s3])
-##        >>> g.writepgf('test2.pgf')
-##
-## Generates a similar Tikz figure but with colored edges.
-##
-## Obviously things get more interesting when you use Python to generate the figure proceeduraly.
-## An example of this can be obtained by calling shiqz(100) which generates a file 'shiqz.pgf'.
-## 
-## So far I have 3 types of drawable objects, Point, Segment, and Figure.
-## A Figure is a subclass of Set and is pretty much just a set of Points, Segments and possibly other Figures.
-## It has a special writepgf function.
-##
-## Points represent points in the hyperbolic plane.  At the moment they are complex numbers representing
-## the point in the upper half plane model.   But I plan to change that for technical reasons.  I provide several constructors.
-## Point.frompolar(radius,angle)   constructs from polar coordinates.
-## Point.fromupper(complex)    constructs from a point in the upper half plane (complex number)
-## Point.fromtangent(tangent) constructs from a unit tangent vector (more later)
-##
-## Segments can so far only be constructed from two points.  Al segments are of finite hyperoblic length.
-## There are so far no half lines or lines but I plan to add classes for them later (good for drawings of
-## of the modular group for example).  Also a Circle class would be nice.
-##
-## The Tangent class is not drawable.  It is a subclass of numpy.matrix.   The elements are supposed to
-## represent unit tangent vectors in the hyperbolic plane and also isometries of the plane.
-##
-## Tangent.origin()
-##
-## Is the tangent vector associated to being in the center of the disk looking right.
-## One can construct a tangent vector from instructions (like a turtle graphics type thing) as follows:
-##
-##        >>> t = Tangent.frominstructions(startangle=pi/2,forward=1,rotate = -pi/2)
-##
-## The constructor takes 3 moves to be followed in order (starting at Tangent.origin())
-## , the first is rotation angle, the second is how much (hyperbolic distance) to move forward,
-## the third is a rotation angle.
-##
-## Any unit tangent vector can be obtained in this way.
-##
-## You can get the basepoint using the fromtangent constructor of Point.
-##        >>> p = Point.fromtangent(t)
-##
-## Tangents also act on Points, Segments, and Figures by left multiplication.  They act like the unique
-## isometry of the hyperbolic plane taking the tangent vector Tangent.origin() to the given tangent vector.
-##
-## For example continuing the above examples one might do:
-##
-##        >>> newfigure = t*g
-##        >>> newfigure.add(p)
-##        >>> newfigure.writepgf('test3.pgf')
-##
-## In the resulting figure the colored triangle is translated (with respect to test2.pgf)
-## and a black point appears in its (hyperbolic) center.
-
 import numpy as np
-from math import sqrt,cos,sin,pi,atan,exp,acosh,log
-from random import choice
+from math import *
 from itertools import product
+from random import choice
 
-def pointtodisk(z):
-    return (z-1j)/(z+1j)
+diskradius = 3.
+pointsize = 0.05
+tangentsize = 0.15
 
-def pointtoupper(z):
-    return (z+1)/(1j*z - 1j)
+class Point(complex):
+    '''A point in the Poincaré disk model of the hyperbolic plane.\n'''
+    '''Basically a complex number of modulus less than 1.\n'''
+    '''You can construct them with modulus 1 (points at infinity or boundary points),\n'''
+    '''But some methods (such as p.hyperboloid) will fail (yielding infinite values.'''
+    def __init__(self,*args,**kwargs):
+        self.color = 'black'
 
-def pointtomatrix(z):
-    x,y = z.real,z.imag
-    return np.matrix([[sqrt(y),x/sqrt(y)],[0,1/sqrt(y)]])
+    @classmethod
+    def fromdisk(cls,z):
+        return Point(z)
 
-def matrixtopoint(a):
-    return (a[0,0]*1j + a[0,1])/(a[1,0]*1j+a[1,1])
+    @classmethod
+    def fromklein(cls,z):
+        return Point(z/(1+ sqrt(1-abs(z)** 2)))
 
-def rotationmatrix(t):
-    '''Acts on upper half plane as a counterclockwise rotation of angle t.'''
-    return np.matrix([[cos(t/2),sin(t/2)],[-sin(t/2),cos(t/2)]])
+    @classmethod
+    def fromhalfplane(cls,z):
+        return Point((z-1j)/(z+1j))
 
-def geodesicmatrix(t):
-    '''Multiplication on the right in SL2 gives geodesic flow in the hyperbolic plane.'''
-    return np.matrix([[exp(t/2),0],[0,exp(-t/2)]])
+    @classmethod
+    def fromhyperboloid(cls,vector):
+        x,y,t = vector
+        return Point(x/(1+t) + y*1j/(1+t))
 
-def hdistance(z,w):
-    '''Hyperbolic distance in the upper half plane.'''
-    a,b = pointtomatrix(z),pointtomatrix(w)
-    c = a**(-1)*b
-    return acosh(np.trace(np.transpose(c)*c)/2)
+    @classmethod
+    def frompolar(cls,angle = 0., radius =0.):
+        return (Tangent.rotate(angle)*Tangent.forward(radius)).basepoint
 
-def segment(z,w,subdivisions=10,tolerance=0.0001):
-    if abs(z.real-w.real) < tolerance:
-        return [z] + [complex(z.real*(1-i/subdivisions)+w.real*i/subdivisions +exp(log(z.imag)*(1-i/subdivisions)+log(w.imag)*i/subdivisions)*1j) for i in range(1,subdivisions)] + [w]
-        
-    def getcenter(z,w):
-        '''Euclidean center of the circle which is the hyperbolic geodesic between z and w.'''
-        mid = (z+w)/2
-        perp = (z-w)*1j
-        t = -mid.imag/perp.imag
-        return mid + t*perp
-    def getangle(c,z):
-        '''Angle (in (-pi/2,pi/2)) between the vertical line throu c (real) and z (in upper half plane).'''
-        return atan(-(z-c).real/(z-c).imag)
-    def gettangent(z,w):
-        '''Returns the matrix representing the unit tangent vector at z to the segment joining z,w, pointing in the direction of w'''
-        c = getcenter(z,w)
-        t = getangle(c,z)
-        if z.real < w.real:
-            return pointtomatrix(z)*rotationmatrix(t)*rotationmatrix(-pi/2)
-        else:
-            return pointtomatrix(z)*rotationmatrix(t)*rotationmatrix(pi/2)
-    
-    return [z]+[matrixtopoint(gettangent(z,w)*geodesicmatrix(hdistance(z,w)*i/subdivisions)) for i in range(1,subdivisions)]+[w]
+    @property
+    def disk(self):
+        return complex(self)
+
+    @property
+    def klein(self):
+        z = complex(self)
+        return 2*z/(1+abs(z)**2)
+
+    @property
+    def halfplane(self):
+        z = complex(self)
+        return complex((z*1j + 1j)/(-z + 1))
+
+    @property
+    def hyperboloid(self):
+        p = 1+abs(self)**2
+        m = 1-abs(self)**2
+        return [2*self.real/m, 2*self.imag/m , p/m]
+
+    @property
+    def polar(self):
+        '''Returns a tuple (angle, distance to origin).'''
+        return np.angle(self),Point.distance(self,Point(0,0))
+
+    @staticmethod
+    def distance(p,q):
+        '''The distance between two points p and q.'''
+        deltapq = 2*abs(p-q)**2/((1-abs(p)**2)*(1-abs(q)**2))
+        return acosh(1+deltapq)
+
+    @staticmethod
+    def midpoint(p,q):
+        '''Returns the midpoint of two points p and q.'''
+        px,py,pt = p.hyperboloid
+        qx,qy,qt = q.hyperboloid
+        midx,midy,midt = (px+qx)/2,(py+qy)/2,(pt+qt)/2
+        midnorm = sqrt(midt**2 - midx**2 + midy**2)
+        return Point.fromhyperboloid([midx/midnorm,midy/midnorm,midt/midnorm])
+
+    @property
+    def tikzline(self):
+        x = diskradius*complex(self)
+        size = (pointsize/2)*(diskradius**2-abs(x)**2)/diskradius**2
+        return '\\begin{pgfonlayer}{foreground}\\draw[fill='+self.color+','+self.color+'] '+'({:.3f},{:.3f})'.format(x.real,x.imag)+' circle '+'({:.3f})'.format(size)+';\\end{pgfonlayer}'
+
+    def __rmul__(self,tangent):
+        '''Tangents acting on points as isometries.'''
+        a,b,c,d = tangent[0,0],tangent[0,1],tangent[1,0],tangent[1,1]
+        z = complex(self)
+        result = Point((a*z+b)/(c*z+d))
+        result.color = self.color
+        return result
+
 
 
 class Tangent(np.matrix):
+    def __array_finalize__(self,*args,**kwargs):
+        self.color = 'black'
+ 
+    def __hash__(self):
+        return hash(str(self))
+
+    @classmethod
+    def fromrealmatrix(cls,matrix):
+        '''Takes a 2x2 matrix with real coeficients and positive determinant.'''
+        matrix = np.matrix(matrix)
+        halfplanetodisk = np.matrix([[1., -1j], [1., 1j]])
+        disktohalfplane = halfplanetodisk.getI()
+        result = halfplanetodisk * matrix * disktohalfplane
+        return Tangent([ [result[0,0],result[0,1]],[result[1,0],result[1,1]] ])
+
     @classmethod
     def origin(cls):
-        return Tangent([[1,0],[0,1]])
-    
-    @classmethod
-    def frominstructions(cls,startangle=0,forward=0,rotate=0,start=rotationmatrix(0)):
-        return Tangent(start*rotationmatrix(startangle)*geodesicmatrix(forward)*rotationmatrix(rotate))
-
-    
-class Point(complex):
-    @classmethod
-    def frompolar(cls,radius=0,angle=0,start=Tangent.origin()):
-        return Point(matrixtopoint(start*rotationmatrix(angle)*geodesicmatrix(radius)))
+        '''At the origin of the Poincaré disk looking right (i.e. towards positive reals).'''
+        return Tangent([[1.,0.],[0.,1.]])
 
     @classmethod
-    def fromupper(cls,z):
-        return Point(z)
-        
-    @classmethod
-    def fromdisk(cls,z):
-        return Point(pointtoupper(z))
+    def forward(cls,distance):
+        '''Move forward a distance (or backward if distance is negative).'''
+        return Tangent.fromrealmatrix(np.matrix([[exp(distance/2),0.], [0., exp(-distance/2)]]))
 
     @classmethod
-    def fromtangent(cls,t):
-        return Point(matrixtopoint(t))
+    def rotate(cls,angle):
+        '''Rotate an angle counterclockwise.'''
+        return Tangent([[cos(angle)+sin(angle)*1j,0.],[0.,1.]])
 
-    def gettikzline(self):
-        if hasattr(self,'color') == False:
-            self.color = 'black'
-        if hasattr(self,'radius') == False:
-            self.radius = 0.2
-        x = pointtodisk(self)*10
-        size = (self.radius/2)*(100-abs(x)**2)/100
-        return '\\begin{pgfonlayer}{foreground}\\draw[fill='+self.color+','+self.color+'] '+'({:.3f},{:.3f})'.format(x.real,x.imag)+' circle '+'({:.3f})'.format(size)+';\\end{pgfonlayer}'
+    @classmethod
+    def sideways(cls,distance):
+        '''Move right a certain distance (or left if distance is negative) while looking at the same point on the horizon.'''
+        return Tangent.fromrealmatrix(np.matrix([[1.,distance], [0., 1.]]))
 
-    def __getattr__(self,attr):
-        if attr=='tikzline':
-            return self.gettikzline()
-        else:
-            raise AttributeError
+    @property
+    def basepoint(self):
+        a,b,c,d = self[0,0],self[0,1],self[1,0],self[1,1]
+        return Point(b/d)
 
-    def __rmul__(self,tangent):
-        p = Point.fromtangent(tangent*pointtomatrix(self))
-        if hasattr(self,'color'):
-                   p.color = self.color
-        if hasattr(self,'radius'):
-                   p.radius = self.radius
-        return p
-        
+    @property
+    def tikzline(self):
+        x = diskradius*complex(self.basepoint)
+        y = diskradius* complex((self*Tangent.forward(tangentsize)).basepoint)
+        left = diskradius * complex((self*Tangent.forward(tangentsize)*Tangent.rotate(2*pi/3)*Tangent.forward(tangentsize/3)).basepoint)
+        right = diskradius * complex((self*Tangent.forward(tangentsize)*Tangent.rotate(-2*pi/3)*Tangent.forward(tangentsize/3)).basepoint)
+        return '\\begin{pgfonlayer}{background}\\draw['+self.color+'] '+'({:.3f},{:.3f})'.format(x.real,x.imag) +' -- '+'({:.3f},{:.3f})'.format(y.real,y.imag)+' -- '+'({:.3f},{:.3f})'.format(left.real,left.imag)+' -- '+'({:.3f},{:.3f})'.format(y.real,y.imag)+' -- '+'({:.3f},{:.3f})'.format(right.real,right.imag)+';\\end{pgfonlayer}'
 
-class Segment():
-    def __init__(self,start,end):
-        self.start = start
-        self.end = end
-    def __str__(self):
-        return str((self.start,self.end))
-    def __repr__(self):
-        return repr((self.start,self.end))
-    
-    def gettikzline(self):
-        if hasattr(self,'color') == False:
-            self.color = 'black'
-        subdivisions = int(100*abs(pointtodisk(self.start)-pointtodisk(self.end)))+10
-        points = [pointtodisk(z) for z in segment(self[0],self[1],subdivisions)]        
-        return '\\begin{pgfonlayer}{background}\\draw['+self.color+'] '+' -- '.join(['({:.3f},{:.3f})'.format(10*x.real,10*x.imag) for x in points])+';\\end{pgfonlayer}'
 
-    def __getattr__(self,attr):
-        if attr=='tikzline':
-            return self.gettikzline()
-        else:
-            raise AttributeError
-
-    def __getitem__(self,index):
-        if index == 0:
-            return self.start
-        elif index == 1:
-            return self.end
-        else:
-            raise AttributeError
-        
-    def __rmul__(self,tangent):
-        s = Segment(tangent*self[0],tangent*self[1])
-        if hasattr(self,'color'):
-                   s.color = self.color
-        return s
-    
 
 class Figure(set):
+    '''A figure is a set of Points, Tangents, etc, with a writepgf method to output a pgf file.\n'''
+    '''It can also be acted on by Tangents (as isometries).'''
     def writepgf(self,filename,drawboundary=True):
         f = open(filename,'w')
         f.write('\\pgfdeclarelayer{background}\n')
@@ -227,7 +153,7 @@ class Figure(set):
         f.write('\\pgfsetlayers{background,foreground}\n')
         f.write('\\begin{tikzpicture}\n')
         if drawboundary:
-            f.write('\\begin{pgfonlayer}{foreground}\\draw (0,0) circle (10);\\end{pgfonlayer}\n')
+            f.write('\\begin{pgfonlayer}{foreground}\\draw (0,0) circle ('+str(diskradius)+');\\end{pgfonlayer}\n')
         for x in self:
             f.write(x.tikzline+'\n')
         f.write('\\end{tikzpicture}\n')
@@ -235,31 +161,226 @@ class Figure(set):
     def __rmul__(self,tangent):
         return Figure([tangent*x for x in self])
 
+class Segment():
+    '''A segment between two points.'''
+    def __init__(self,start,end):
+        self.start = start
+        self.end = end
+        self.color = 'black'
+    def __str__(self):
+        return str((self.start,self.end))
+    def __repr__(self):
+        return repr((self.start,self.end))
+
+    @property
+    def tikzline(self):
+        start,end = self.start,self.end
+        subdivisions = int(diskradius*10*abs(start-end))+10
+        startklein,endklein = complex(start.klein), complex(end.klein)
+        points = [Point.fromklein((1-i/subdivisions)*startklein + i*endklein/subdivisions) for i in range(subdivisions+1)]
+        return '\\begin{pgfonlayer}{background}\\draw['+self.color+'] '+' -- '.join(['({:.3f},{:.3f})'.format(diskradius*x.real,diskradius*x.imag) for x in points])+';\\end{pgfonlayer}'
+
+    def __rmul__(self,tangent):
+        s = Segment(tangent*self.start,tangent*self.end)
+        s.color = self.color
+        return s
+
+class Halfline(Segment):
+    '''An infinite halfline starting at a tangent's basepoint and extending in the direction given by the tangent.'''
+    def __init__(self,tangent):
+        self.start = tangent.basepoint
+        start = self.start
+        forward = (tangent * Tangent.forward(1)).basepoint
+        z = complex(start.klein)
+        w = complex(forward.klein)
+        u = w-z
+        a = abs(u)**2
+        b = 2*(z*u.conjugate()).real
+        c = abs(z)**2 - 1
+        t = (-b + sqrt(b**2 - 4*a*c))/(2*a)
+        endklein = z + t*u
+        self.end = Point.fromklein(endklein)
+        self.color = 'black'
+
+    @classmethod
+    def fromtwopoints(cls,start,end):
+        self = Halfline(Tangent.origin())
+        self.start = start
+        self.end = end
+        self.color = 'black'
+        return self
+
+    def __rmul__(self,tangent):
+        s = Halfline.fromtwopoints(tangent*self.start,tangent*self.end)
+        s.color = self.color
+        return s
+
+class Line(Segment):
+    '''An infinite line through a given tangent vector.'''
+    def __init__(self,tangent):
+        base = tangent.basepoint
+        forward = (tangent * Tangent.forward(1)).basepoint
+        z = complex(base.klein)
+        w = complex(forward.klein)
+        u = w-z
+        a = abs(u)**2
+        b = 2*(z*u.conjugate()).real
+        c = abs(z)**2 - 1
+        t = (-b + sqrt(b**2 - 4*a*c))/(2*a)
+        endklein = z + t*u
+        self.end = Point.fromklein(endklein)
+        t = (-b - sqrt(b**2 - 4*a*c))/(2*a)
+        startklein = z+t*u
+        self.start = Point.fromklein(startklein)
+        self.color = 'black'
+
+    @classmethod
+    def fromtwopoints(cls,start,end):
+        self.start = start
+        self.end = end
+        self.color = 'black'
+
+    def __rmul__(self,tangent):
+        s = Halfline.fromtwopoints(tangent*self.start,tangent*self.end)
+        s.color = self.color
+        return s
 
 
-def shiqz(numpoints = 100):
-    points = [Point(i+1j) for i in range(numpoints)]
-    colors = {-1:'red',0:'white',1:'blue'}
+class Circle():
+    '''A circle with a given center and radius.'''
+    def __init__(self,center,radius):
+        self.center = center
+        self.radius = radius
+        self.color = 'black'
+
+    def __str__(self):
+        return 'Circle('+str((self.center,self.radius))+')'
+
+    def __repr__(self):
+        return 'Circle('+repr((self.center,self.radius))+')'
+
+    @property
+    def tikzline(self):
+        angle,distance = self.center.polar
+        z = complex(Point.frompolar(angle,distance-self.radius))
+        w = complex(Point.frompolar(angle,distance+self.radius))
+        center = (z+w)/2
+        radius = abs(z - center)
+        return '\\begin{pgfonlayer}{background}\\draw['+self.color+'] '+'({:.3f},{:.3f})'.format(diskradius*center.real,diskradius*center.imag)+' circle ('+str(diskradius*radius)+');\\end{pgfonlayer}'
+        
+
+    def __rmul__(self,tangent):
+        '''Tangents acting on points as isometries.'''
+        result = Circle(tangent*self.center,self.radius)
+        result.color = self.color
+        return result
+
+class Disk(Circle):
+    '''A disk (or filled circle) with a given center and radius.'''
+    def __str__(self):
+        return 'Disk('+str((self.center,self.radius))+')'
+
+    def __repr__(self):
+        return 'Disk('+repr((self.center,self.radius))+')'
+
+    @property
+    def tikzline(self):
+        angle,distance = self.center.polar
+        z = complex(Point.frompolar(angle,distance-self.radius))
+        w = complex(Point.frompolar(angle,distance+self.radius))
+        center = (z+w)/2
+        radius = abs(z - center)
+        return '\\begin{pgfonlayer}{background}\\draw['+self.color+', fill='+self.color+'] '+'({:.3f},{:.3f})'.format(diskradius*center.real,diskradius*center.imag)+' circle ('+str(diskradius*radius)+');\\end{pgfonlayer}'
+
+    def __rmul__(self,tangent):
+        '''Tangents acting on points as isometries.'''
+        result = Disk(tangent*self.center,self.radius)
+        result.color = self.color
+        return result
+
+def modulargroup(n):
+    '''Generator for elements of length n or less in the modular group with respect to the generating set\n'''
+    '''{a = Tangent.rotate(pi), b=Tangent.rotate(pi)*Tangent.sideways(1), b**2}.'''
+    a = Tangent.rotate(pi)
+    b = Tangent.rotate(pi)*Tangent.sideways(1)
+    B = [b,b**2]
+    for length in range(n):
+        for bees in product(B,repeat=length//2):
+            result = Tangent.origin()
+            for x in bees:
+                result = result * x * a
+            if length%2 == 1:
+                yield a * result
+                yield result * b
+                yield result * b**2
+            else:
+                yield result
+                yield a*result*a
+
+def stickman(size=1):
+    '''Returns a (rudimentary) stickman figure at the origin.'''
+    head = Circle((Tangent.rotate(pi/2)*Tangent.forward(0.75*size)).basepoint,0.25*size)
+    stick = Segment(Point(0),(Tangent.rotate(pi/2)*Tangent.forward(0.5*size)).basepoint)
+    leftleg = Segment(Point(0),(Tangent.rotate(-pi/3)*Tangent.forward(0.5*size)).basepoint)
+    rightleg = Segment(Point(0),(Tangent.rotate(-pi/2 - pi/10)*Tangent.forward(0.5*size)).basepoint)
+    armbase = (Tangent.rotate(pi/2)*Tangent.forward(0.4*size)).basepoint
+    leftarmend = (Tangent.rotate(pi/2)*Tangent.forward(0.4*size)*Tangent.rotate(-2*pi/3)*Tangent.forward(0.4*size)).basepoint
+    rightarmend = (Tangent.rotate(pi/2)*Tangent.forward(0.4*size)*Tangent.rotate(-pi-pi/10)*Tangent.forward(0.4*size)).basepoint
+    leftarm = Segment(armbase,leftarmend)
+    rightarm = Segment(armbase,rightarmend)
+    eye = Disk(Point.frompolar(angle=pi/2-pi/20, radius=0.8*size),radius=0.02*size)
+    return Figure([head,stick,rightleg,leftleg,leftarm,rightarm,eye])
+
+def stickmaninmodulargroup(n=10,name='1.pgf'):
+    left = Point.fromhalfplane(-0.5*0.95+1.05*sin(acos(0.5))*1j)
+    right = Point.fromhalfplane(0.5*0.95+1.05*sin(acos(0.5))*1j)
+    stick = Tangent.forward(0.3)*stickman(0.3)
+    seg = Segment(left,right)
+    seg.color = 'red'
+    righthalf = Segment(right,Point(0.999))
+    righthalf.color = 'blue'
+    lefthalf = Segment(left,Point(0.999))
+    lefthalf.color = 'green'
+
+    f = Figure()
+    for t in modulargroup(n):
+        f.add(t*seg)
+        f.add(t*lefthalf)
+        f.add(t*righthalf)
+        f.update(t*stick)
     
-    segments = []
-    for i,p in enumerate(points[:-1]):
-        s = Segment(p,points[i+1])
-        s.value = choice((-1,0,1))
-        s.color = colors[s.value]
-        segments.append(s)
+    f.writepgf(name)
 
-    orangesegments = []
-    for i,s in enumerate(segments[:-1]):
-        value = 0
-        for j,s2 in enumerate(segments[i:]):
-            value += s2.value
-            if value == -1:
-                if j != i:
-                    t = Segment(s.start,s2.end)
-                    t.color = 'orange'
-                    orangesegments.append(t)
-                break
 
-    t = Tangent(pointtomatrix(-numpoints//2 + 1j))
-    f = rotationmatrix(pi/2)*geodesicmatrix(-3)*t*Figure(points+segments+orangesegments)
-    f.writepgf('shiqz.pgf')
+def stickmanwalkinmodulargroup(name='1.pgf',n=10,walksteps=10):
+    left = Point.fromhalfplane(-0.5*0.95+1.05*sin(acos(0.5))*1j)
+    right = Point.fromhalfplane(0.5*0.95+1.05*sin(acos(0.5))*1j)
+    stick = Tangent.forward(0.3)*stickman(0.3)
+    seg = Segment(left,right)
+    seg.color = 'red'
+    righthalf = Segment(right,Point(0.999))
+    righthalf.color = 'blue'
+    lefthalf = Segment(left,Point(0.999))
+    lefthalf.color = 'green'
+
+    f = Figure()
+    for t in modulargroup(n):
+        f.add(t*seg)
+        f.add(t*lefthalf)
+        f.add(t*righthalf)
+
+    startpoint = Tangent.forward(0.3).basepoint
+    current = Tangent.origin()
+    last = Tangent.origin()
+    f.add(startpoint)
+    for i in range(walksteps):
+        last,current = current, current * choice([Tangent.sideways(1),Tangent.sideways(-1),Tangent.rotate(pi)])
+        s = Segment(last*startpoint,current*startpoint)
+        s.color = 'gray'
+        f.add(s)
+        f.add(current*startpoint)
+
+    f.update(current*stick)
+    
+    f.writepgf(name)
+    
