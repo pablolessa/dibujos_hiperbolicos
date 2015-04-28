@@ -24,6 +24,15 @@ diskradius = 3.
 pointsize = 0.05
 tangentsize = 0.15
 
+# Here we define convenience functions Red(drawable), Green(drawable), etc.
+# All they do is change the color of the given drawable object.
+# So one can create a red point at the origin using Red(Point(0)).
+# They have docstrings.
+colors = 'red green blue cyan magenta yellow black gray darkgray lightgray brown lime olive orange pink purple teal violet white'.split()
+for c in colors:
+    exec('def '+c.capitalize()+'(drawable):\n\tdrawable.color = '+"'"+c+"'"+'\n\t'+'return drawable\n')
+    exec(c.capitalize()+'.__doc__ = '+'"'+c.capitalize()+'(drawable) Changes the .color attribute of the drawable to '+c+'.\\n It also returns the object so, for example, '+c.capitalize()+'(Tangent.origin()) returns a '+c+' tangent object at the origin."')
+
 class Point(complex):
     '''A point in the Poincaré disk model of the hyperbolic plane.\n'''
     '''Basically a complex number of modulus less than 1.\n'''

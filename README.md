@@ -39,6 +39,24 @@ I usually use KTikz to get eps, pdf, and pgn figures from this.
 
  ![test2.pgn](/test2.png)
 
+ We provide functions to change the color attribute of drawable objects.  So the above example could've been written as follows:
+
+        >>> s1 = Red(Segment(p1,p2))
+        >>> s2 = Orange(Segment(p2,p3))
+        >>> s3 = Blue(Segment(p3,p1))
+        >>> g = Figure([p1,p2,p3,s1,s2,s3])
+        >>> g.writepgf('test2.pgf')
+
+ The supported colors are:  Red Green Blue Cyan Magenta Yellow Black Gray Darkgray Lightgray Brown Lime Olive Orange Pink Purple Teal Violet White.
+
+ One caveat is that one can not apply any of the color functions to a figure (for example with the intent of changing the color of all drawables in
+ the figure).  Instead one might use:
+
+        >>> for drawable in figure:
+				Red(drawable)
+
+ to achive the same effect.
+
 
  Obviously things get more interesting when you use Python to generate the figure proceeduraly.
  For an example of this inspect the stickmaninmodulargroup() function.
