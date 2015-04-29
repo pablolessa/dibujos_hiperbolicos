@@ -28,10 +28,31 @@ tangentsize = 0.15
 # All they do is change the color of the given drawable object.
 # So one can create a red point at the origin using Red(Point(0)).
 # They have docstrings.
+
 colors = 'red green blue cyan magenta yellow black gray darkgray lightgray brown lime olive orange pink purple teal violet white'.split()
 for c in colors:
     exec('def '+c.capitalize()+'(drawable):\n\tdrawable.color = '+"'"+c+"'"+'\n\t'+'return drawable\n')
     exec(c.capitalize()+'.__doc__ = '+'"'+c.capitalize()+'(drawable) Changes the .color attribute of the drawable to '+c+'.\\n It also returns the object so, for example, '+c.capitalize()+'(Tangent.origin()) returns a '+c+' tangent object at the origin."')
+
+# A convenience for handling layers in the tikzline attribute of drawables
+layerstartstr = {'background':'\\begin{pgfonlayer}{background}','main':'','foreground':'\\begin{pgfonlayer}{foreground}'}
+layerendstr = {'background':'\\end{pgfonlayer}','main':'','foreground':'\\end{pgfonlayer}'}
+
+def Foreground(drawable):
+    '''Sets drawable.layer to 'foreground' and returns the object.'''
+    drawable.layer = 'foreground'
+    return drawable
+
+def Mainlayer(drawable):
+    '''Sets drawable.layer to 'foreground' and returns the object.'''
+    drawable.layer = 'main'
+    return drawable
+
+def Background(drawable):
+    '''Sets drawable.layer to 'main' and returns the object.'''
+    drawable.layer = 'background'
+    return drawable
+
 
 class Point(complex):
     '''A point in the Poincaré disk model of the hyperbolic plane.\n'''
@@ -40,6 +61,7 @@ class Point(complex):
     '''But some methods (such as p.hyperboloid) will fail (yielding infinite values.'''
     def __init__(self,*args,**kwargs):
         self.color = 'black'
+        self.layer = 'main'
 
     @classmethod
     def fromdisk(cls,z):
@@ -106,7 +128,7 @@ class Point(complex):
     def tikzline(self):
         x = diskradius*complex(self)
         size = (pointsize/2)*(diskradius**2-abs(x)**2)/diskradius**2
-        return '\\begin{pgfonlayer}{foreground}\\draw[fill='+self.color+','+self.color+'] '+'({:.3f},{:.3f})'.format(x.real,x.imag)+' circle '+'({:.3f})'.format(size)+';\\end{pgfonlayer}'
+        return layerstartstr[self.layer]+'\\draw[fill='+self.color+','+self.color+'] '+'({:.3f},{:.3f})'.format(x.real,x.imag)+' circle '+'({:.3f})'.format(size)+';'+layerendstr[self.layer]
 
     def __rmul__(self,tangent):
         '''Tangents acting on points as isometries.'''
@@ -121,6 +143,7 @@ class Point(complex):
 class Tangent(np.matrix):
     def __array_finalize__(self,*args,**kwargs):
         self.color = 'black'
+        self.layer = 'main'
  
     def __hash__(self):
         return hash(str(self))
@@ -165,7 +188,7 @@ class Tangent(np.matrix):
         y = diskradius* complex((self*Tangent.forward(tangentsize)).basepoint)
         left = diskradius * complex((self*Tangent.forward(tangentsize)*Tangent.rotate(2*pi/3)*Tangent.forward(tangentsize/3)).basepoint)
         right = diskradius * complex((self*Tangent.forward(tangentsize)*Tangent.rotate(-2*pi/3)*Tangent.forward(tangentsize/3)).basepoint)
-        return '\\begin{pgfonlayer}{background}\\draw['+self.color+'] '+'({:.3f},{:.3f})'.format(x.real,x.imag) +' -- '+'({:.3f},{:.3f})'.format(y.real,y.imag)+' -- '+'({:.3f},{:.3f})'.format(left.real,left.imag)+' -- '+'({:.3f},{:.3f})'.format(y.real,y.imag)+' -- '+'({:.3f},{:.3f})'.format(right.real,right.imag)+';\\end{pgfonlayer}'
+        return layerstartstr[self.layer]+'\\draw['+self.color+'] '+'({:.3f},{:.3f})'.format(x.real,x.imag) +' -- '+'({:.3f},{:.3f})'.format(y.real,y.imag)+' -- '+'({:.3f},{:.3f})'.format(left.real,left.imag)+' -- '+'({:.3f},{:.3f})'.format(y.real,y.imag)+' -- '+'({:.3f},{:.3f})'.format(right.real,right.imag)+';'+layerendstr[self.layer]
 
 
 
@@ -176,7 +199,7 @@ class Figure(set):
         f = open(filename,'w')
         f.write('\\pgfdeclarelayer{background}\n')
         f.write('\\pgfdeclarelayer{foreground}\n')
-        f.write('\\pgfsetlayers{background,foreground}\n')
+        f.write('\\pgfsetlayers{background,main,foreground}\n')
         f.write('\\begin{tikzpicture}\n')
         if drawboundary:
             f.write('\\begin{pgfonlayer}{foreground}\\draw (0,0) circle ('+str(diskradius)+');\\end{pgfonlayer}\n')
@@ -193,6 +216,7 @@ class Segment():
         self.start = start
         self.end = end
         self.color = 'black'
+        self.layer = 'background'
     def __str__(self):
         return str((self.start,self.end))
     def __repr__(self):
@@ -204,7 +228,7 @@ class Segment():
         subdivisions = int(diskradius*10*abs(start-end))+10
         startklein,endklein = complex(start.klein), complex(end.klein)
         points = [Point.fromklein((1-i/subdivisions)*startklein + i*endklein/subdivisions) for i in range(subdivisions+1)]
-        return '\\begin{pgfonlayer}{background}\\draw['+self.color+'] '+' -- '.join(['({:.3f},{:.3f})'.format(diskradius*x.real,diskradius*x.imag) for x in points])+';\\end{pgfonlayer}'
+        return layerstartstr[self.layer]+'\\draw['+self.color+'] '+' -- '.join(['({:.3f},{:.3f})'.format(diskradius*x.real,diskradius*x.imag) for x in points])+';'+layerendstr[self.layer]
 
     def __rmul__(self,tangent):
         s = Segment(tangent*self.start,tangent*self.end)
@@ -227,6 +251,7 @@ class Halfline(Segment):
         endklein = z + t*u
         self.end = Point.fromklein(endklein)
         self.color = 'black'
+        self.layer = 'background'
 
     @classmethod
     def fromtwopoints(cls,start,end):
@@ -259,6 +284,7 @@ class Line(Segment):
         startklein = z+t*u
         self.start = Point.fromklein(startklein)
         self.color = 'black'
+        self.layer = 'background'
 
     @classmethod
     def fromtwopoints(cls,start,end):
@@ -278,6 +304,7 @@ class Circle():
         self.center = center
         self.radius = radius
         self.color = 'black'
+        self.layer = 'background'
 
     def __str__(self):
         return 'Circle('+str((self.center,self.radius))+')'
@@ -292,7 +319,7 @@ class Circle():
         w = complex(Point.frompolar(angle,distance+self.radius))
         center = (z+w)/2
         radius = abs(z - center)
-        return '\\begin{pgfonlayer}{background}\\draw['+self.color+'] '+'({:.3f},{:.3f})'.format(diskradius*center.real,diskradius*center.imag)+' circle '+'({:.3f})'.format(diskradius*radius)+';\\end{pgfonlayer}'
+        return layerstartstr[self.layer]+'\\draw['+self.color+'] '+'({:.3f},{:.3f})'.format(diskradius*center.real,diskradius*center.imag)+' circle '+'({:.3f})'.format(diskradius*radius)+';'+layerendstr[self.layer]
         
 
     def __rmul__(self,tangent):
@@ -316,7 +343,7 @@ class Disk(Circle):
         w = complex(Point.frompolar(angle,distance+self.radius))
         center = (z+w)/2
         radius = abs(z - center)
-        return '\\begin{pgfonlayer}{background}\\draw['+self.color+', fill='+self.color+'] '+'({:.3f},{:.3f})'.format(diskradius*center.real,diskradius*center.imag)+' circle '+'({:.3f})'.format(diskradius*radius)+';\\end{pgfonlayer}'
+        return layerstartstr[self.layer]+'\\draw['+self.color+', fill='+self.color+'] '+'({:.3f},{:.3f})'.format(diskradius*center.real,diskradius*center.imag)+' circle '+'({:.3f})'.format(diskradius*radius)+';'+layerendstr[self.layer]
 
     def __rmul__(self,tangent):
         '''Tangents acting on points as isometries.'''

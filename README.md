@@ -18,10 +18,12 @@ I usually use KTikz to get eps, pdf, and pgn figures from this.
         >>> f.writepgf('test.pgf')
 
  This generates the file 'test.pgf' containing a Tikz figure of a hyperbolic triangle.
- Viewing this in KTikz one can get a png,eps, or pdf file.
+ The resulting file could be included into a LaTex document directly (using the Tikz package) but 
+ it's more convenient to use a program such as KTikz to preview the result and generate png,eps, or pdf files as needed.
  
  ![test.pgn](/test.png)
  
+## Colors
  
  You can easily change the color of segments or points by changing the color attribute.
  For example:
@@ -57,6 +59,8 @@ I usually use KTikz to get eps, pdf, and pgn figures from this.
 
  to achive the same effect.
 
+## An example
+
 
  Obviously things get more interesting when you use Python to generate the figure proceeduraly.
  For an example of this inspect the stickmaninmodulargroup() function.
@@ -65,6 +69,8 @@ I usually use KTikz to get eps, pdf, and pgn figures from this.
  
   ![test3.pgn](/test3.png)
 
+
+## Drawables
  
  The drawable objects are Tangent, Point, Segment, Halfline, Line, Circle, and Disk.
  A Figure is a subclass of Set and is pretty much just a set of drawable objects with a writepgf function.
@@ -119,6 +125,8 @@ Which generates the following figure:
 
  ![test4.pgn](/test4.png)
 
+## The modular group
+
 We provide the generator modulargroup(n) for the ball of radius n in the modular group.  As an example consider:
 
 		>>> g = Figure()
@@ -128,4 +136,45 @@ We provide the generator modulargroup(n) for the ball of radius n in the modular
 		>>> g.writepgf('test5.pgf')
 
  ![test5.pgn](/test5.png)
+
+## Layers
+
+ Each drawable object belongs to one of the three layers 'background', 'main', or 'foreground' (where main is the middle layer).   
+ The layer an object belongs to is stored in its .layer attribute and can be changed at will.  
+
+ Objects on the same layer will be drawn in a random order (because a figure is a subclass of set Python sets are unordered).  Maybe
+ in the future this will be changed by implementing some sort of ordered set subclass (I know there's a recipe for this out there).
+ 
+ For convenience (as with colors) we have provided the functions Background(drawable), Mainlayer(drawable) and Foreground(drawable)
+ to change the layer of a drawable object. These can be used at the time of construction or later on.
+
+ By default Points and Tangents belong to the main layer and all other drawables to the background.  
+
+ To illustrate the use of layers consider the following randomly generated figure:
+
+		>>> from random import choice
+		>>> f = Figure()
+		>>> for i in range(20):
+				d = Tangent.rotate(2*pi*i/20)*Tangent.forward(2)*Disk(Point(0),0.6)
+				d.color = choice(['teal','magenta','cyan'])
+				f.add(d)	
+		>>> f.writepgf('test6.pgf')
+
+ ![test6.pgn](/test6.png)
+
+ We can force the 'teal' colored disks to be in the foreground, the 'magenta' colored ones in the middle, and the 'cyan' colored disks
+ to the background as follows:
+
+		>>> for x in f:
+				if x.color == 'teal':
+					y = Foreground(x)
+				if x.color == 'magenta':
+					y = Mainlayer(x)
+				if x.color == 'cyan':
+					y = Background(x)
+		>>> f.writepgf('test7.pgf')
+
+ ![test7.pgn](/test6.png)
+ 
+
 
