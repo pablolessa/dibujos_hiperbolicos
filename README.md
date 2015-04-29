@@ -174,7 +174,7 @@ We provide the generator modulargroup(n) for the ball of radius n in the modular
 					y = Background(x)
 		>>> f.writepgf('test7.pgf')
 
- ![test7.pgn](/test6.png)
+ ![test7.pgn](/test7.png)
  
 
 
