@@ -158,6 +158,9 @@ class Tangent(np.matrix):
     def __hash__(self):
         return hash(str(self))
 
+    def __eq__(self,other):
+        return self[0,0] == other[0,0] and self[0,1] == other[0,1] and self[1,0] == other[1,0] and self[1,1] == other[1,1] and self.color == other.color and self.layer == other.layer
+
     @classmethod
     def fromrealmatrix(cls,matrix):
         '''Takes a 2x2 matrix with real coeficients and positive determinant.'''
