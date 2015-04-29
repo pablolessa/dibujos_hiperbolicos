@@ -165,7 +165,7 @@ We provide the generator modulargroup(n) for the ball of radius n in the modular
  ![test6.pgn](/test6.png)
 
  We can force the 'teal' colored disks to be in the foreground, the 'magenta' colored ones in the middle, and the 'cyan' colored disks
- to the background as follows:
+ to the background as follows (the variable y's only purpose is to avoid a long printout of return values of the layer functions, the code also works without it):
 
 		>>> for x in f:
 				if x.color == 'teal':
