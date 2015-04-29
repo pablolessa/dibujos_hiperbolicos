@@ -136,6 +136,7 @@ class Point(complex):
         z = complex(self)
         result = Point((a*z+b)/(c*z+d))
         result.color = self.color
+        result.layer = self.layer
         return result
 
 
@@ -144,6 +145,15 @@ class Tangent(np.matrix):
     def __array_finalize__(self,*args,**kwargs):
         self.color = 'black'
         self.layer = 'main'
+
+    def __mul__(self,other):
+        if type(self) != type(other):
+            return NotImplemented
+        else:
+            result = super().__mul__(other)
+            result.color = other.color
+            result.layer = other.layer
+            return result
  
     def __hash__(self):
         return hash(str(self))
@@ -326,6 +336,7 @@ class Circle():
         '''Tangents acting on points as isometries.'''
         result = Circle(tangent*self.center,self.radius)
         result.color = self.color
+        result.layer = self.layer
         return result
 
 class Disk(Circle):
@@ -349,6 +360,7 @@ class Disk(Circle):
         '''Tangents acting on points as isometries.'''
         result = Disk(tangent*self.center,self.radius)
         result.color = self.color
+        result.layer = self.layer
         return result
 
 def modulargroup(n):
