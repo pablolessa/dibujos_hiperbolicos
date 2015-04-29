@@ -84,6 +84,8 @@ I usually use KTikz to get eps, pdf, and pgn figures from this.
  from a Tangent object (a unit tangent vector) whose basepoint is the starting point of the Halfline and just
  a point on the Line in the other case (its direction indicated the direction of the Halfline or line).
 
+## Tangents and isometries
+
  The Tangent class serves two puposes.   They represent unit tangent vectors and also isometries of the hyperbolic plane.
  The constructor
 
