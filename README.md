@@ -78,7 +78,10 @@ I usually use KTikz to get eps, pdf, and pgn figures from this.
  Points represent points in the hyperbolic plane.  I provide several constructors some examples are:
  Point.frompolar(radius,angle)   constructs from polar coordinates.
  Point.fromupper(complex)    constructs from a point in the upper half plane (complex number)
- Point.fromtangent(tangent) constructs from a unit tangent vector (more later)
+ 
+ Another useful way of getting points is by using the .basepoint attribute of a Tangent (more on these later).
+ In short if t is Tangent respresenting some tangent vector then t.basepoint is a Point representing its basepoint.
+
 
  Segments can so far only be constructed from two points.  Halflines and Lines are supposed to be constructed
  from a Tangent object (a unit tangent vector) whose basepoint is the starting point of the Halfline and just

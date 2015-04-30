@@ -1,4 +1,4 @@
-# "Dibujos Hiperbólicos" is a program to aid in generating figures of the Poincaré disk for inclusion in LaTex documents.
+# "Dibujos Hiperbólicos" is a tool for generating figures of the Poincaré disk model of the hyperbolic plane.
 #    Copyright (C) 2015 Pablo Lessa
 
 #    This program is free software: you can redistribute it and/or modify
@@ -30,7 +30,7 @@ pointsize = 0.05
 tangentsize = 0.15
 
 # Here we define convenience functions Red(drawable), Green(drawable), etc.
-# All they do is change the .color of the given drawable object.
+# All they do is change the .color attribute of the given drawable object and return the result.
 # For example one can create a red point at the origin using Red(Point(0)).
 # The colors supported are:
 # Red Green Blue Cyan Magenta Yellow Black Gray Darkgray Lightgray Brown Lime Olive Orange Pink Purple Teal Violet White
