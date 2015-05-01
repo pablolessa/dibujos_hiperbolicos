@@ -153,7 +153,7 @@ We provide the generator modulargroup(n) for the ball of radius n in the modular
  For convenience (as with colors) we have provided the functions Background(drawable), Mainlayer(drawable) and Foreground(drawable)
  to change the layer of a drawable object. These can be used at the time of construction or later on.
 
- By default Points and Tangents belong to the main layer and all other drawables to the background.  
+ By default Points and Tangents belong to the foreground layer, Segments, Circles, Lines, and Halflines to the main layer and Disks to the background.
 
  To illustrate the use of layers consider the following randomly generated figure:
 
