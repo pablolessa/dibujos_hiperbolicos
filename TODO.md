@@ -26,19 +26,15 @@ segments.  This makes the pgf file longer than necessary.
 As a consequence we sometimes hit the (ridiculous in modern times) 5MB limit imposed by Tex and cannot
 generate an output image in Tikz (without hacking around with the LaTex configuration that is).
 
+To avoid this I verify that the strings representing the points we output to the file are distinct.  But
+a better solution would be not to calculate all these extra points at all.
+
 Hence the main implementation issue to be solved is a better algorithm for approximating a hyperbolic geodesic
 by straight Euclidean segments in a visually pleasing and efficient way.
 
 At present the subdivision is evenly spaced when one looks at the points in the Klein model.  This is
 probably not the optimal solution for visually pleasing results.  Probably one should do something like
-recursively look at each subsegment and decide whether to subdivide it in two (at the hyperbolic midpoint?)
-or something.
-
-## Smarter Point.tikzline
-
-Points are drawn smaller if they are close to the boundary of the disk.  At the moment this means that we sometimes
-output points of radius 0.000 to the pgf file.  This also contributes to bulking up the pgf output and hitting that
-5MB limit.   This should be easy enough to fix.
+recursively look at each subsegment and decide whether to subdivide it in two or something.
 
 ## Changing layers
 
