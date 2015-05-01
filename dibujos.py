@@ -78,7 +78,7 @@ class Point(complex):
     '''But some methods (such as p.hyperboloid) will fail (yielding infinite values.'''
     def __init__(self,*args,**kwargs):
         self.color = 'black'
-        self.layer = 'main'
+        self.layer = 'foreground'
 
     @classmethod
     def fromdisk(cls,z):
@@ -86,7 +86,7 @@ class Point(complex):
 
     @classmethod
     def fromklein(cls,z):
-        return cls(z/(1+ sqrt(1-abs(z)** 2)))
+        return cls(z/(1+ sqrt(1-min(1,abs(z)** 2))))
 
     @classmethod
     def fromhalfplane(cls,z):
@@ -165,7 +165,7 @@ class Tangent(np.matrix):
     '''A useful pattern is to create a tangent out of "instructions" e.g. t = Tangent.forward(1)*Tangent.rotate(pi/2)*Tangent.forward(2)*Tangent.rotate(pi/3).'''
     def __array_finalize__(self,*args,**kwargs):
         self.color = 'black'
-        self.layer = 'main'
+        self.layer = 'foreground'
 
     def __mul__(self,other):
         if type(self) != type(other):
@@ -250,7 +250,7 @@ class Segment():
         self.start = start
         self.end = end
         self.color = 'black'
-        self.layer = 'background'
+        self.layer = 'main'
     def __str__(self):
         return str((self.start,self.end))
     def __repr__(self):
@@ -285,7 +285,7 @@ class Halfline(Segment):
         endklein = z + t*u
         self.end = Point.fromklein(endklein)
         self.color = 'black'
-        self.layer = 'background'
+        self.layer = 'main'
 
     @classmethod
     def fromtwopoints(cls,start,end):
@@ -318,7 +318,7 @@ class Line(Segment):
         startklein = z+t*u
         self.start = Point.fromklein(startklein)
         self.color = 'black'
-        self.layer = 'background'
+        self.layer = 'main'
 
     @classmethod
     def fromtwopoints(cls,start,end):
@@ -338,7 +338,7 @@ class Circle():
         self.center = center
         self.radius = radius
         self.color = 'black'
-        self.layer = 'background'
+        self.layer = 'main'
 
     def __str__(self):
         return 'Circle('+str((self.center,self.radius))+')'
@@ -365,6 +365,12 @@ class Circle():
 
 class Disk(Circle):
     '''A disk (or filled circle) with a given center and radius.'''
+    def __init__(self,center,radius):
+        self.center = center
+        self.radius = radius
+        self.color = 'black'
+        self.layer = 'background'
+
     def __str__(self):
         return 'Disk('+str((self.center,self.radius))+')'
 
