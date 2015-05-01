@@ -145,6 +145,9 @@ class Point(complex):
     def tikzline(self):
         x = diskradius*complex(self)
         size = (pointsize/2)*(diskradius**2-abs(x)**2)/diskradius**2
+        sizestr = '{:.3f}'.format(size)  
+        if sizestr ==  '0.000':
+            return ''                       # We avoid outputting points of radius (0.000).
         return layerstartstr[self.layer]+'\\draw[fill='+self.color+','+self.color+'] '+'({:.3f},{:.3f})'.format(x.real,x.imag)+' circle '+'({:.3f})'.format(size)+';'+layerendstr[self.layer]
 
     def __rmul__(self,tangent):
@@ -238,7 +241,9 @@ class Figure(set):
         if drawboundary:
             f.write('\\begin{pgfonlayer}{foreground}\\draw (0,0) circle ('+str(diskradius)+');\\end{pgfonlayer}\n')
         for x in self:
-            f.write(x.tikzline+'\n')
+            line = x.tikzline
+            if line != '':      # Avoid writting empty lines
+                f.write(x.tikzline+'\n')
         f.write('\\end{tikzpicture}\n')
         f.close()
     def __rmul__(self,tangent):
@@ -262,7 +267,25 @@ class Segment():
         subdivisions = int(diskradius*10*abs(start-end))+10
         startklein,endklein = complex(start.klein), complex(end.klein)
         points = [Point.fromklein((1-i/subdivisions)*startklein + i*endklein/subdivisions) for i in range(subdivisions+1)]
-        return layerstartstr[self.layer]+'\\draw['+self.color+'] '+' -- '.join(['({:.3f},{:.3f})'.format(diskradius*x.real,diskradius*x.imag) for x in points])+';'+layerendstr[self.layer]
+        # This is kind of a hack
+        # As segments are transformed and end up closer to the boundary they get very small
+        # This means that we were sometimes outputting lines like \draw (x,y) -- (x,y) -- (x,y) -- (x,y+0.001);
+        # To avoid this we make a list of points in the subdivision which have unique strings in the output file
+        # If the list has only one element it means the line is two small to see (points coincide up to 3 decimal digits on page).
+        # It would be better to avoid calculating all these extra points.
+        # But this hack has concrete benefits (e.g. one can now draw all images of a stickman under the transformations in modulagroup(20)
+        # whereas before we could only go up to modulargroup(15), the difference is visually noticible).
+        x = points[0]
+        currentstr = '({:.3f},{:.3f})'.format(diskradius*x.real,diskradius*x.imag)
+        pointstrings = [currentstr]
+        for x in points[1:]:
+            pointstr = '({:.3f},{:.3f})'.format(diskradius*x.real,diskradius*x.imag)
+            if pointstr != currentstr:              
+                currentstr = pointstr
+                pointstrings.append(currentstr)
+        if len(pointstrings) == 1:
+            return ''   # Avoid outputting segments whose endpoints coincide
+        return layerstartstr[self.layer]+'\\draw['+self.color+'] '+' -- '.join(pointstrings)+';'+layerendstr[self.layer]
 
     def __rmul__(self,tangent):
         s = Segment(tangent*self.start,tangent*self.end)
@@ -353,6 +376,9 @@ class Circle():
         w = complex(Point.frompolar(angle,distance+self.radius))
         center = (z+w)/2
         radius = abs(z - center)
+        radiusstr = '{:.3f}'.format(diskradius*radius)
+        if radiusstr == '0.000':
+            return ''               # Avoid outputting circles of radius 0 to the file.
         return layerstartstr[self.layer]+'\\draw['+self.color+'] '+'({:.3f},{:.3f})'.format(diskradius*center.real,diskradius*center.imag)+' circle '+'({:.3f})'.format(diskradius*radius)+';'+layerendstr[self.layer]
         
 
@@ -384,6 +410,9 @@ class Disk(Circle):
         w = complex(Point.frompolar(angle,distance+self.radius))
         center = (z+w)/2
         radius = abs(z - center)
+        radiusstr = '{:.3f}'.format(diskradius*radius)
+        if radiusstr == '0.000':
+            return ''               # Avoid outputting circles of radius 0 to the file.
         return layerstartstr[self.layer]+'\\draw['+self.color+', fill='+self.color+'] '+'({:.3f},{:.3f})'.format(diskradius*center.real,diskradius*center.imag)+' circle '+'({:.3f})'.format(diskradius*radius)+';'+layerendstr[self.layer]
 
     def __rmul__(self,tangent):
