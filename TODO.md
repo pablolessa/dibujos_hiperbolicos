@@ -36,28 +36,6 @@ At present the subdivision is evenly spaced when one looks at the points in the 
 probably not the optimal solution for visually pleasing results.  Probably one should do something like
 recursively look at each subsegment and decide whether to subdivide it in two or something.
 
-## Changing layers
-
-The figure.writepgf function calls on each drawable to generate its own line in the resulting pgf file.  This includes
-specifying the layer on which it is drawn.   This bulks up the pgf file with a bunch of \begin{pgfonlayer}{background}
-and \end{pgfonlayer}.
-
-Maybe its better to have the figure group the drawables according to the layer they are on and then output a single
-
-        \begin{pgfonlayer}{layer}
-        \end{pgfonlayer}
-
-block for each of the three layers.
-
-I like the API for adding drawables to figures with figure.add and updating figures with figure.update so I don't
-want to complicate the inner structure of the Figure class (i.e. I want to keep it as a subclass of set).
-
-This means the solution should be done inside the writepgf method.  And implies that there will be a cost in terms
-of performance at the time of generating the pgf file.
-
-As a hack I kept almost all drawables on the main layer by default and this works pretty well.  But there is still
-room for improvement.
-
 ## Boundary points, Halfline and Line
 
 At the moment Halfline and Line are kind of hacks.  They're basically segments except one of the endpoints is on

@@ -41,10 +41,7 @@ for c in colors:
     exec('def '+c.capitalize()+'(drawable):\n\tdrawable.color = '+"'"+c+"'"+'\n\t'+'return drawable\n')
     exec(c.capitalize()+'.__doc__ = '+'"'+c.capitalize()+'(drawable) Changes the .color attribute of the drawable to '+c+'.\\n It also returns the object so, for example, '+c.capitalize()+'(Tangent.origin()) returns a '+c+' tangent object at the origin."')
 
-# The following two dictionaries are used to set the correct layer when calculating the .tikzline attributes of drawables.
  
-layerstartstr = {'background':'\\begin{pgfonlayer}{background}','main':'','foreground':'\\begin{pgfonlayer}{foreground}'}
-layerendstr = {'background':'\\end{pgfonlayer}','main':'','foreground':'\\end{pgfonlayer}'}
 
 
 # Similar to the color functions defined above we provide functions to change the .layer attribute of drawables.
@@ -148,7 +145,7 @@ class Point(complex):
         sizestr = '{:.3f}'.format(size)  
         if sizestr ==  '0.000':
             return ''                       # We avoid outputting points of radius (0.000).
-        return layerstartstr[self.layer]+'\\draw[fill='+self.color+','+self.color+'] '+'({:.3f},{:.3f})'.format(x.real,x.imag)+' circle '+'({:.3f})'.format(size)+';'+layerendstr[self.layer]
+        return '\\draw[fill='+self.color+','+self.color+'] '+'({:.3f},{:.3f})'.format(x.real,x.imag)+' circle '+'({:.3f})'.format(size)+';'
 
     def __rmul__(self,tangent):
         '''Tangents acting on points as isometries.'''
@@ -225,7 +222,7 @@ class Tangent(np.matrix):
         y = diskradius* complex((self*Tangent.forward(tangentsize)).basepoint)
         left = diskradius * complex((self*Tangent.forward(tangentsize)*Tangent.rotate(2*pi/3)*Tangent.forward(tangentsize/3)).basepoint)
         right = diskradius * complex((self*Tangent.forward(tangentsize)*Tangent.rotate(-2*pi/3)*Tangent.forward(tangentsize/3)).basepoint)
-        return layerstartstr[self.layer]+'\\draw['+self.color+'] '+'({:.3f},{:.3f})'.format(x.real,x.imag) +' -- '+'({:.3f},{:.3f})'.format(y.real,y.imag)+' -- '+'({:.3f},{:.3f})'.format(left.real,left.imag)+' -- '+'({:.3f},{:.3f})'.format(y.real,y.imag)+' -- '+'({:.3f},{:.3f})'.format(right.real,right.imag)+';'+layerendstr[self.layer]
+        return '\\draw['+self.color+'] '+'({:.3f},{:.3f})'.format(x.real,x.imag) +' -- '+'({:.3f},{:.3f})'.format(y.real,y.imag)+' -- '+'({:.3f},{:.3f})'.format(left.real,left.imag)+' -- '+'({:.3f},{:.3f})'.format(y.real,y.imag)+' -- '+'({:.3f},{:.3f})'.format(right.real,right.imag)+';'
 
 
 
@@ -238,12 +235,22 @@ class Figure(set):
         f.write('\\pgfdeclarelayer{foreground}\n')
         f.write('\\pgfsetlayers{background,main,foreground}\n')
         f.write('\\begin{tikzpicture}\n')
+
         if drawboundary:
             f.write('\\begin{pgfonlayer}{foreground}\\draw (0,0) circle ('+str(diskradius)+');\\end{pgfonlayer}\n')
-        for x in self:
-            line = x.tikzline
-            if line != '':      # Avoid writting empty lines
-                f.write(x.tikzline+'\n')
+        
+        layerstartstr = {'background':'\\begin{pgfonlayer}{background}','main':'','foreground':'\\begin{pgfonlayer}{foreground}'}
+        layerendstr = {'background':'\\end{pgfonlayer}','main':'','foreground':'\\end{pgfonlayer}'}
+
+        for layer in ['background','main','foreground']:
+            for x in self:
+                f.write(layerstartstr[layer])
+                if x.layer == layer:
+                    line = x.tikzline
+                    if line != '':      # Avoid writting empty lines
+                        f.write(x.tikzline+'\n')
+                f.write(layerendstr[layer])
+
         f.write('\\end{tikzpicture}\n')
         f.close()
     def __rmul__(self,tangent):
@@ -285,7 +292,7 @@ class Segment():
                 pointstrings.append(currentstr)
         if len(pointstrings) == 1:
             return ''   # Avoid outputting segments whose endpoints coincide
-        return layerstartstr[self.layer]+'\\draw['+self.color+'] '+' -- '.join(pointstrings)+';'+layerendstr[self.layer]
+        return '\\draw['+self.color+'] '+' -- '.join(pointstrings)+';'
 
     def __rmul__(self,tangent):
         s = Segment(tangent*self.start,tangent*self.end)
@@ -379,7 +386,7 @@ class Circle():
         radiusstr = '{:.3f}'.format(diskradius*radius)
         if radiusstr == '0.000':
             return ''               # Avoid outputting circles of radius 0 to the file.
-        return layerstartstr[self.layer]+'\\draw['+self.color+'] '+'({:.3f},{:.3f})'.format(diskradius*center.real,diskradius*center.imag)+' circle '+'({:.3f})'.format(diskradius*radius)+';'+layerendstr[self.layer]
+        return '\\draw['+self.color+'] '+'({:.3f},{:.3f})'.format(diskradius*center.real,diskradius*center.imag)+' circle '+'({:.3f})'.format(diskradius*radius)+';'
         
 
     def __rmul__(self,tangent):
@@ -413,7 +420,7 @@ class Disk(Circle):
         radiusstr = '{:.3f}'.format(diskradius*radius)
         if radiusstr == '0.000':
             return ''               # Avoid outputting circles of radius 0 to the file.
-        return layerstartstr[self.layer]+'\\draw['+self.color+', fill='+self.color+'] '+'({:.3f},{:.3f})'.format(diskradius*center.real,diskradius*center.imag)+' circle '+'({:.3f})'.format(diskradius*radius)+';'+layerendstr[self.layer]
+        return '\\draw['+self.color+', fill='+self.color+'] '+'({:.3f},{:.3f})'.format(diskradius*center.real,diskradius*center.imag)+' circle '+'({:.3f})'.format(diskradius*radius)+';'
 
     def __rmul__(self,tangent):
         '''Tangents acting on points as isometries.'''
