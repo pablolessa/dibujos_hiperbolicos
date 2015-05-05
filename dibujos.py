@@ -239,8 +239,8 @@ class Figure(set):
         if drawboundary:
             f.write('\\begin{pgfonlayer}{foreground}\\draw (0,0) circle ('+str(diskradius)+');\\end{pgfonlayer}\n')
         
-        layerstartstr = {'background':'\\begin{pgfonlayer}{background}','main':'','foreground':'\\begin{pgfonlayer}{foreground}'}
-        layerendstr = {'background':'\\end{pgfonlayer}','main':'','foreground':'\\end{pgfonlayer}'}
+        layerstartstr = {'background':'\\begin{pgfonlayer}{background}\n','main':'','foreground':'\\begin{pgfonlayer}{foreground}\n'}
+        layerendstr = {'background':'\\end{pgfonlayer}\n\n','main':'','foreground':'\\end{pgfonlayer}\n\n'}
 
         for layer in ['background','main','foreground']:
             f.write(layerstartstr[layer])

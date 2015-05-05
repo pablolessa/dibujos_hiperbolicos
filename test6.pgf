@@ -3,24 +3,24 @@
 \pgfsetlayers{background,main,foreground}
 \begin{tikzpicture}
 \begin{pgfonlayer}{foreground}\draw (0,0) circle (3.0);\end{pgfonlayer}
-\begin{pgfonlayer}{background}\draw[magenta, fill=magenta] (2.092,-0.680) circle (0.386);
-\end{pgfonlayer}\begin{pgfonlayer}{background}\draw[cyan, fill=cyan] (-2.092,-0.680) circle (0.386);
-\end{pgfonlayer}\begin{pgfonlayer}{background}\draw[cyan, fill=cyan] (1.779,1.293) circle (0.386);
-\end{pgfonlayer}\begin{pgfonlayer}{background}\draw[magenta, fill=magenta] (-1.779,-1.293) circle (0.386);
-\end{pgfonlayer}\begin{pgfonlayer}{background}\draw[cyan, fill=cyan] (2.199,0.000) circle (0.386);
-\end{pgfonlayer}\begin{pgfonlayer}{background}\draw[magenta, fill=magenta] (-1.293,-1.779) circle (0.386);
-\end{pgfonlayer}\begin{pgfonlayer}{background}\draw[magenta, fill=magenta] (0.680,2.092) circle (0.386);
-\end{pgfonlayer}\begin{pgfonlayer}{background}\draw[teal, fill=teal] (0.000,2.199) circle (0.386);
-\end{pgfonlayer}\begin{pgfonlayer}{background}\draw[cyan, fill=cyan] (-0.680,-2.092) circle (0.386);
-\end{pgfonlayer}\begin{pgfonlayer}{background}\draw[cyan, fill=cyan] (-0.000,-2.199) circle (0.386);
-\end{pgfonlayer}\begin{pgfonlayer}{background}\draw[teal, fill=teal] (-0.680,2.092) circle (0.386);
-\end{pgfonlayer}\begin{pgfonlayer}{background}\draw[teal, fill=teal] (-1.293,1.779) circle (0.386);
-\end{pgfonlayer}\begin{pgfonlayer}{background}\draw[magenta, fill=magenta] (0.680,-2.092) circle (0.386);
-\end{pgfonlayer}\begin{pgfonlayer}{background}\draw[teal, fill=teal] (1.293,-1.779) circle (0.386);
-\end{pgfonlayer}\begin{pgfonlayer}{background}\draw[cyan, fill=cyan] (-1.779,1.293) circle (0.386);
-\end{pgfonlayer}\begin{pgfonlayer}{background}\draw[teal, fill=teal] (-2.092,0.680) circle (0.386);
-\end{pgfonlayer}\begin{pgfonlayer}{background}\draw[magenta, fill=magenta] (2.092,0.680) circle (0.386);
-\end{pgfonlayer}\begin{pgfonlayer}{background}\draw[magenta, fill=magenta] (1.293,1.779) circle (0.386);
-\end{pgfonlayer}\begin{pgfonlayer}{background}\draw[magenta, fill=magenta] (1.779,-1.293) circle (0.386);
-\end{pgfonlayer}\begin{pgfonlayer}{background}\draw[cyan, fill=cyan] (-2.199,0.000) circle (0.386);
-\end{pgfonlayer}\begin{pgfonlayer}{foreground}\end{pgfonlayer}\begin{pgfonlayer}{foreground}\end{pgfonlayer}\begin{pgfonlayer}{foreground}\end{pgfonlayer}\begin{pgfonlayer}{foreground}\end{pgfonlayer}\begin{pgfonlayer}{foreground}\end{pgfonlayer}\begin{pgfonlayer}{foreground}\end{pgfonlayer}\begin{pgfonlayer}{foreground}\end{pgfonlayer}\begin{pgfonlayer}{foreground}\end{pgfonlayer}\begin{pgfonlayer}{foreground}\end{pgfonlayer}\begin{pgfonlayer}{foreground}\end{pgfonlayer}\begin{pgfonlayer}{foreground}\end{pgfonlayer}\begin{pgfonlayer}{foreground}\end{pgfonlayer}\begin{pgfonlayer}{foreground}\end{pgfonlayer}\begin{pgfonlayer}{foreground}\end{pgfonlayer}\begin{pgfonlayer}{foreground}\end{pgfonlayer}\begin{pgfonlayer}{foreground}\end{pgfonlayer}\begin{pgfonlayer}{foreground}\end{pgfonlayer}\begin{pgfonlayer}{foreground}\end{pgfonlayer}\begin{pgfonlayer}{foreground}\end{pgfonlayer}\begin{pgfonlayer}{foreground}\end{pgfonlayer}\end{tikzpicture}
+\begin{pgfonlayer}{background}\draw[teal, fill=teal] (1.779,-1.293) circle (0.386);
+\draw[magenta, fill=magenta] (-2.199,0.000) circle (0.386);
+\draw[magenta, fill=magenta] (2.092,-0.680) circle (0.386);
+\draw[teal, fill=teal] (-2.092,-0.680) circle (0.386);
+\draw[magenta, fill=magenta] (1.779,1.293) circle (0.386);
+\draw[cyan, fill=cyan] (-1.779,-1.293) circle (0.386);
+\draw[cyan, fill=cyan] (0.680,2.092) circle (0.386);
+\draw[teal, fill=teal] (-1.293,-1.779) circle (0.386);
+\draw[teal, fill=teal] (-0.680,-2.092) circle (0.386);
+\draw[cyan, fill=cyan] (0.000,2.199) circle (0.386);
+\draw[magenta, fill=magenta] (-0.680,2.092) circle (0.386);
+\draw[magenta, fill=magenta] (-0.000,-2.199) circle (0.386);
+\draw[magenta, fill=magenta] (2.199,0.000) circle (0.386);
+\draw[teal, fill=teal] (-1.293,1.779) circle (0.386);
+\draw[cyan, fill=cyan] (0.680,-2.092) circle (0.386);
+\draw[magenta, fill=magenta] (-1.779,1.293) circle (0.386);
+\draw[teal, fill=teal] (1.293,1.779) circle (0.386);
+\draw[teal, fill=teal] (1.293,-1.779) circle (0.386);
+\draw[teal, fill=teal] (2.092,0.680) circle (0.386);
+\draw[magenta, fill=magenta] (-2.092,0.680) circle (0.386);
+\end{pgfonlayer}\begin{pgfonlayer}{foreground}\end{pgfonlayer}\end{tikzpicture}
