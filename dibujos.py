@@ -243,13 +243,13 @@ class Figure(set):
         layerendstr = {'background':'\\end{pgfonlayer}','main':'','foreground':'\\end{pgfonlayer}'}
 
         for layer in ['background','main','foreground']:
+            f.write(layerstartstr[layer])
             for x in self:
-                f.write(layerstartstr[layer])
                 if x.layer == layer:
                     line = x.tikzline
                     if line != '':      # Avoid writting empty lines
                         f.write(x.tikzline+'\n')
-                f.write(layerendstr[layer])
+            f.write(layerendstr[layer])
 
         f.write('\\end{tikzpicture}\n')
         f.close()
