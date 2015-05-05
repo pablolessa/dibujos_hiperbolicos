@@ -240,7 +240,7 @@ class Figure(set):
             f.write('\\begin{pgfonlayer}{foreground}\\draw (0,0) circle ('+str(diskradius)+');\\end{pgfonlayer}\n')
         
         layerstartstr = {'background':'\n\\begin{pgfonlayer}{background}\n','main':'','foreground':'\n\\begin{pgfonlayer}{foreground}\n'}
-        layerendstr = {'background':'\n\\end{pgfonlayer}\n','main':'','foreground':'\n\\end{pgfonlayer}\n'}
+        layerendstr = {'background':'\\end{pgfonlayer}\n','main':'','foreground':'\\end{pgfonlayer}\n'}
 
         for layer in ['background','main','foreground']:
             f.write(layerstartstr[layer])
