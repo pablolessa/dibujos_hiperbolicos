@@ -73,10 +73,12 @@ def Background(drawable):
 # Each drawable has a .tikzline attribute which is used by the Figure writepgf method to write a pgf file.
 
 class Point(complex):
-    '''A point in the Poincaré disk model of the hyperbolic plane.\n'''
-    '''Basically a complex number of modulus less than 1.\n'''
-    '''You can construct them with modulus 1 (points at infinity or boundary points),\n'''
-    '''But some methods (such as p.hyperboloid) will fail (yielding infinite values.'''
+    '''A point in the Poincaré disk model of the hyperbolic plane.
+    
+    Basically a complex number of modulus less than 1.
+    You can construct them with modulus 1 (points at infinity or boundary points),
+    But some methods (such as p.hyperboloid) will fail (yielding infinite values.'''
+
     def __init__(self,*args,**kwargs):
         self.color = 'black'
         self.layer = 'foreground'
@@ -172,10 +174,11 @@ class Point(complex):
 
 
 class Tangent(np.matrix):
-    '''Tangents represent both unit tangent vectors in the disk and hyperbolic isometries.'''
-    '''Hence they can be drawn (as a small arrow) but also can act by multiplication on other drawables (including other tangents)'''
-    '''Several constructors are provided.  Tangent.origin(), Tangent.forward(d), Tangent.rotate(a), Tangent.sideways(d).'''
-    '''A useful pattern is to create a tangent out of "instructions" e.g. t = Tangent.forward(1)*Tangent.rotate(pi/2)*Tangent.forward(2)*Tangent.rotate(pi/3).'''
+    '''Tangents represent both unit tangent vectors in the disk and hyperbolic isometries.
+    
+    Hence they can be drawn (as a small arrow) but also can act by multiplication on other drawables (including other tangents)
+    Several constructors are provided.  Tangent.origin(), Tangent.forward(d), Tangent.rotate(a), Tangent.sideways(d).
+    A useful pattern is to create a tangent out of "instructions" e.g. t = Tangent.forward(1)*Tangent.rotate(pi/2)*Tangent.forward(2)*Tangent.rotate(pi/3).'''
     def __array_finalize__(self,*args,**kwargs):
         self.color = 'black'
         self.layer = 'foreground'
@@ -249,8 +252,9 @@ class Tangent(np.matrix):
 
 
 class Figure(set):
-    '''A figure is a set of Points, Tangents, etc, with a writepgf method to output a pgf file.\n'''
-    '''It can also be acted on by Tangents (as isometries).'''
+    '''A figure is a set of Points, Tangents, etc, with a writepgf method to output a pgf file.
+    
+    It can also be acted on by Tangents (as isometries).'''
     def writepgf(self,filename,drawboundary=True):
         f = open(filename,'w')
         f.write('\\pgfdeclarelayer{background}\n')
@@ -280,7 +284,8 @@ class Figure(set):
         f = open(filename,'w')
         size = int(3*svgdiskradius)
         f.write('<svg xmlns="http://www.w3.org/2000/svg" width="{}" height="{}" version="1.1">\n'.format(str(size),str(size)))
-        f.write('<g transform="translate({} {})">'.format(str(size//2),str(size//2)))
+        # the y-coordinate needs to be flipped because in svg it grows downwards this is done with scale(1,-1)
+        f.write('<g transform="translate({} {}) scale(1,-1)">'.format(str(size//2),str(size//2)))
 
         if drawboundary:
             f.write('<circle cx="0" cy="0" r="{}" fill="none" stroke="black"/>'.format(str(int(svgdiskradius))))
@@ -422,6 +427,7 @@ class Line(Segment):
 
     @classmethod
     def fromtwopoints(cls,start,end):
+        self = Line(Tangent.origin())
         self.start = start
         self.end = end
         self.color = 'black'
@@ -529,8 +535,9 @@ class Disk(Circle):
         return result
 
 def modulargroup(n):
-    '''Generator for elements of length n or less in the modular group with respect to the generating set\n'''
-    '''{a = Tangent.rotate(pi), b=Tangent.rotate(pi)*Tangent.sideways(1), b**2}.'''
+    '''Generator for elements of length n or less in the modular group.
+
+    The generating set is {a = Tangent.rotate(pi), b=Tangent.rotate(pi)*Tangent.sideways(1), b**2}.'''
     a = Tangent.rotate(pi)
     b = Tangent.rotate(pi)*Tangent.sideways(1)
     B = [b,b**2]
