@@ -26,8 +26,12 @@ from random import choice
 # tangentsize is a hyperbolic length of arrows used to represent tangent vectors.
 
 diskradius = 3.
-pointsize = 0.05
+pointsize = 0.016
 tangentsize = 0.15
+
+# Radius of the disk for svg output (in pixels, an svg line is about 1px wide so this actually matters even if it's a vector format)
+
+svgdiskradius = 300
 
 # Here we define convenience functions Red(drawable), Green(drawable), etc.
 # All they do is change the .color attribute of the given drawable object and return the result.
@@ -141,11 +145,20 @@ class Point(complex):
     @property
     def tikzline(self):
         x = diskradius*complex(self)
-        size = (pointsize/2)*(diskradius**2-abs(x)**2)/diskradius**2
+        size = diskradius*(pointsize/2)*(diskradius**2-abs(x)**2)/diskradius**2
         sizestr = '{:.3f}'.format(size)  
         if sizestr ==  '0.000':
             return ''                       # We avoid outputting points of radius (0.000).
         return '\\draw[fill='+self.color+','+self.color+'] '+'({:.3f},{:.3f})'.format(x.real,x.imag)+' circle '+'({:.3f})'.format(size)+';'
+
+    @property
+    def svgline(self):
+        x = svgdiskradius*complex(self)
+        size = svgdiskradius*(pointsize/2)*(svgdiskradius**2-abs(x)**2)/svgdiskradius**2
+        sizestr = '{:.3f}'.format(size)
+        if sizestr ==  '0.000':
+            return ''                       # We avoid outputting points of radius (0.000).
+        return '<circle cx="{:.3f}" cy="{:.3f}" r="{:.3f}" fill="{}" stroke="{}"/>'.format(x.real,x.imag,size,self.color,self.color)
 
     def __rmul__(self,tangent):
         '''Tangents acting on points as isometries.'''
@@ -224,6 +237,15 @@ class Tangent(np.matrix):
         right = diskradius * complex((self*Tangent.forward(tangentsize)*Tangent.rotate(-2*pi/3)*Tangent.forward(tangentsize/3)).basepoint)
         return '\\draw['+self.color+'] '+'({:.3f},{:.3f})'.format(x.real,x.imag) +' -- '+'({:.3f},{:.3f})'.format(y.real,y.imag)+' -- '+'({:.3f},{:.3f})'.format(left.real,left.imag)+' -- '+'({:.3f},{:.3f})'.format(y.real,y.imag)+' -- '+'({:.3f},{:.3f})'.format(right.real,right.imag)+';'
 
+    @property
+    def svgline(self):
+        x = svgdiskradius*complex(self.basepoint)
+        y = svgdiskradius* complex((self*Tangent.forward(tangentsize)).basepoint)
+        left = svgdiskradius * complex((self*Tangent.forward(tangentsize)*Tangent.rotate(2*pi/3)*Tangent.forward(tangentsize/3)).basepoint)
+        right = svgdiskradius * complex((self*Tangent.forward(tangentsize)*Tangent.rotate(-2*pi/3)*Tangent.forward(tangentsize/3)).basepoint)
+        return '<path d="{}" fill="none" stroke="{}"/>'.format(' L'.join(['M{:.3f},{:.3f}'.format(x.real,x.imag),'{:.3f},{:.3f}'.format(y.real,y.imag), '{:.3f},{:.3f}'.format(left.real,left.imag),'{:.3f},{:.3f}'.format(y.real,y.imag),'{:.3f},{:.3f}'.format(right.real,right.imag) ]), self.color)
+
+
 
 
 class Figure(set):
@@ -253,6 +275,27 @@ class Figure(set):
 
         f.write('\\end{tikzpicture}\n')
         f.close()
+
+    def writesvg(self,filename,drawboundary=True):
+        f = open(filename,'w')
+        size = int(3*svgdiskradius)
+        f.write('<svg xmlns="http://www.w3.org/2000/svg" width="{}" height="{}" version="1.1">\n'.format(str(size),str(size)))
+        f.write('<g transform="translate({} {})">'.format(str(size//2),str(size//2)))
+
+        if drawboundary:
+            f.write('<circle cx="0" cy="0" r="{}" fill="none" stroke="black"/>'.format(str(int(svgdiskradius))))
+        
+        for layer in ['background','main','foreground']:
+            for x in self:
+                if x.layer == layer:
+                    line = x.svgline
+                    if line != '':      # Avoid writting empty lines
+                        f.write(x.svgline+'\n')
+
+        f.write('</g>')
+        f.write('</svg>')
+        f.close()
+
     def __rmul__(self,tangent):
         return Figure([tangent*x for x in self])
 
@@ -293,6 +336,33 @@ class Segment():
         if len(pointstrings) == 1:
             return ''   # Avoid outputting segments whose endpoints coincide
         return '\\draw['+self.color+'] '+' -- '.join(pointstrings)+';'
+
+    @property
+    def svgline(self):
+        start,end = self.start,self.end
+        subdivisions = int(svgdiskradius*10*abs(start-end))+10
+        startklein,endklein = complex(start.klein), complex(end.klein)
+        points = [Point.fromklein((1-i/subdivisions)*startklein + i*endklein/subdivisions) for i in range(subdivisions+1)]
+        # This is kind of a hack
+        # As segments are transformed and end up closer to the boundary they get very small
+        # This means that we were sometimes outputting lines like \draw (x,y) -- (x,y) -- (x,y) -- (x,y+0.001);
+        # To avoid this we make a list of points in the subdivision which have unique strings in the output file
+        # If the list has only one element it means the line is two small to see (points coincide up to 3 decimal digits on page).
+        # It would be better to avoid calculating all these extra points.
+        # But this hack has concrete benefits (e.g. one can now draw all images of a stickman under the transformations in modulagroup(20)
+        # whereas before we could only go up to modulargroup(15), the difference is visually noticible).
+        x = points[0]
+        currentstr = 'M{:.3f},{:.3f}'.format(svgdiskradius*x.real,svgdiskradius*x.imag)
+        pointstrings = [currentstr]
+        for x in points[1:]:
+            pointstr = 'L{:.3f},{:.3f}'.format(svgdiskradius*x.real,svgdiskradius*x.imag)
+            if pointstr != currentstr:              
+                currentstr = pointstr
+                pointstrings.append(currentstr)
+        if len(pointstrings) == 1:
+            return ''   # Avoid outputting segments whose endpoints coincide
+        return '<path d="{}" fill="none" stroke="{}"/>'.format(''.join(pointstrings),self.color)
+
 
     def __rmul__(self,tangent):
         s = Segment(tangent*self.start,tangent*self.end)
@@ -387,6 +457,20 @@ class Circle():
         if radiusstr == '0.000':
             return ''               # Avoid outputting circles of radius 0 to the file.
         return '\\draw['+self.color+'] '+'({:.3f},{:.3f})'.format(diskradius*center.real,diskradius*center.imag)+' circle '+'({:.3f})'.format(diskradius*radius)+';'
+
+    @property
+    def svgline(self):
+        angle,distance = self.center.polar
+        z = complex(Point.frompolar(angle,distance-self.radius))
+        w = complex(Point.frompolar(angle,distance+self.radius))
+        center = (z+w)/2
+        centerxstr = '{:.3f}'.format(svgdiskradius*center.real)
+        centerystr = '{:.3f}'.format(svgdiskradius*center.imag)
+        radius = abs(z - center)
+        radiusstr = '{:.3f}'.format(svgdiskradius*radius)
+        if radiusstr == '0.000':
+            return ''               # Avoid outputting circles of radius 0 to the file.
+        return '<circle cx="{}" cy="{}" r="{}" fill="none" stroke="{}"/>'.format(centerxstr,centerystr,radiusstr,self.color)
         
 
     def __rmul__(self,tangent):
@@ -421,6 +505,21 @@ class Disk(Circle):
         if radiusstr == '0.000':
             return ''               # Avoid outputting circles of radius 0 to the file.
         return '\\draw['+self.color+', fill='+self.color+'] '+'({:.3f},{:.3f})'.format(diskradius*center.real,diskradius*center.imag)+' circle '+'({:.3f})'.format(diskradius*radius)+';'
+
+    @property
+    def svgline(self):
+        angle,distance = self.center.polar
+        z = complex(Point.frompolar(angle,distance-self.radius))
+        w = complex(Point.frompolar(angle,distance+self.radius))
+        center = (z+w)/2
+        centerxstr = '{:.3f}'.format(svgdiskradius*center.real)
+        centerystr = '{:.3f}'.format(svgdiskradius*center.imag)
+        radius = abs(z - center)
+        radiusstr = '{:.3f}'.format(svgdiskradius*radius)
+        if radiusstr == '0.000':
+            return ''               # Avoid outputting circles of radius 0 to the file.
+        return '<circle cx="{}" cy="{}" r="{}" fill="{}" stroke="{}"/>'.format(centerxstr,centerystr,radiusstr,self.color,self.color)
+
 
     def __rmul__(self,tangent):
         '''Tangents acting on points as isometries.'''
