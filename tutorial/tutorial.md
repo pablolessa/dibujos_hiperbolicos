@@ -32,7 +32,7 @@ To do this we simply use the .writepgf or .writesvg methods of the Figure class.
 
 The output looks like this (here I'm showing the svg file):
 
-![emptyfigure.svg](emptyfigure.svg)
+![emptyfigure.svg](emptyfigure.png)
 
 ## Adding drawables to a figure
 
@@ -49,7 +49,7 @@ The most important drawable class is Tangent.  Tangent objects represent unit ta
     f.add(t)
     f.writesvg('tangent.svg')
 
-![tangent.svg](tangent.svg)
+![tangent.svg](tangent.png)
 
 The constuctor Tangent.origin() gives the unit tangent vector at the center of the disk pointing right.
 
@@ -68,7 +68,7 @@ The Tangent.sideways(distance) constructor gives a tangent vector to the right o
     f.update([forward,backward,rotated,right,left])
     f.writesvg('moretangents.svg')
 
-![moretangents.svg](moretangents.svg)
+![moretangents.svg](moretangents.png)
 
 Here we used the Figure.update method which adds a sequence of drawables to a figure.   In short, use f.add if you want to add a single drawable to a figure f but use f.update if you want to add more than one at the same time.   You can use f.add(g) to add all drawables in a figure g to a figure f for example.
 
@@ -89,7 +89,7 @@ One can change the color of a tangent either by changing the attribute directly 
     Orange(right)
     f.writesvg('moretangentswithcolors.svg')
 
-![moretangentswithcolors.svg](moretangentswithcolors.svg)
+![moretangentswithcolors.svg](moretangentswithcolors.png)
 
 ## Tangents are isometries
 
@@ -102,7 +102,7 @@ This is a good way to construct tangents.
     f.add(Green(Tangent.forward(1)*Tangent.rotate(pi/2)*Tangent.forward(1)))
     f.writesvg('tangentsareisometries.svg')
 
-![tangentsareisometries.svg](tangentsareisometries.svg)
+![tangentsareisometries.svg](tangentsareisometries.png)
 
 ## Points
 
@@ -117,7 +117,7 @@ They can be colored as expected.  And acted on by tangents as explained above.
     f.add(Tangent.forward(1)*Tangent.rotate(pi/2)*Tangent.forward(1)*Point(0))
     f.writesvg('points.svg')
 
-![points.svg](points.svg)
+![points.svg](points.png)
 
 ### Other constructors for Points
 
@@ -136,7 +136,7 @@ Also, don't forget that you can get new points from old ones by multiplying by t
     f = Figure(octogonmidpoints+octogonvertices)
     f.writesvg('octogonpoints.svg')
 
-![octogonpoints.svg](octogonpoints.svg)
+![octogonpoints.svg](octogonpoints.png)
 
 ## Segments
 
@@ -151,7 +151,7 @@ Let's add sides to our octogon.
 
     f.writesvg('octogonwithsides.svg')
 
-![octogonwithsides.svg](octogonwithsides.svg)
+![octogonwithsides.svg](octogonwithsides.png)
 
 ## Acting on figures with Tangents
 
@@ -181,7 +181,7 @@ Here's an example:
 
     g.writesvg('someoctogons.svg')
 
-![someoctogons.svg](someoctogons.svg)
+![someoctogons.svg](someoctogons.png)
 
 ## Halfline, Line, and boundary points
 
@@ -220,7 +220,7 @@ Here are some random examples:
 
     g.writesvg('lines.svg')
 
-![lines.svg](lines.svg)
+![lines.svg](lines.png)
 
 ## Circles and disks
 
@@ -235,7 +235,7 @@ One can draw hyperbolic circles (which happen to be Euclidean circles as well) a
     g.add(Blue(Disk(Point(0),0.05)))
     g.writesvg('disks.svg')
 
-![disks.svg](disks.svg)
+![disks.svg](disks.png)
 
 ## Stickman and modulargoup
 
@@ -249,7 +249,7 @@ Since it's a figure you need to use .update to add it to any figure of yours.
     f.update(Tangent.forward(1)*Tangent.rotate(pi/2)*stickman(size=0.3))
     f.writesvg('stickman.svg')
 
-![stickman.svg](stickman.svg)
+![stickman.svg](stickman.png)
 
 We also provide a generator modulargroup(n) which generates the ball of radius n in the modular group (basically a bunch of tangents generated as products of Tangent.rotate(pi) and Tangent.sideways(1)).  This can be used to produce nice pictures such as the following:
 
@@ -259,7 +259,7 @@ We also provide a generator modulargroup(n) which generates the ball of radius n
         g.update(t*f)
     g.writesvg('morestickmen.svg')
 
-![morestickmen.svg](morestickmen.svg)
+![morestickmen.svg](morestickmen.png)
 
 # Future
 
