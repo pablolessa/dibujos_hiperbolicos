@@ -8,7 +8,7 @@ The pgf files outputed can be used directly from LaTex via the Tikz package.  I 
 
 The svg format is very well supported by web browsers.  One can also edit and convert these types of files using programs such as Inkscape.
 
-There is a [tutorial available](tutorial/index.html)  but for those who want to see something before going that far we now illustrate some basic usage.
+There is a ![tutorial available](tutorial/index.html)  but for those who want to see something before going that far we now illustrate some basic usage.
 
 ## Example usage
 
