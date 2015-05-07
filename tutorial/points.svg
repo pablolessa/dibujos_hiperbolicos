@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="900" version="1.1">
+<g transform="translate(450 450) scale(1,-1)"><circle cx="0" cy="0" r="300" fill="none" stroke="black"/><circle cx="-299.926" cy="0.000" r="0.001" fill="blue" stroke="blue"/>
+<circle cx="-299.799" cy="0.000" r="0.003" fill="blue" stroke="blue"/>
+<circle cx="-299.453" cy="0.000" r="0.009" fill="blue" stroke="blue"/>
+<circle cx="-298.516" cy="0.000" r="0.024" fill="blue" stroke="blue"/>
+<circle cx="-295.984" cy="0.000" r="0.064" fill="blue" stroke="blue"/>
+<circle cx="-289.208" cy="0.000" r="0.170" fill="blue" stroke="blue"/>
+<circle cx="-271.544" cy="0.000" r="0.434" fill="blue" stroke="blue"/>
+<circle cx="0.000" cy="0.000" r="2.400" fill="blue" stroke="blue"/>
+<circle cx="-138.635" cy="0.000" r="1.887" fill="blue" stroke="blue"/>
+<circle cx="298.516" cy="0.000" r="0.024" fill="blue" stroke="blue"/>
+<circle cx="299.799" cy="0.000" r="0.003" fill="blue" stroke="blue"/>
+<circle cx="295.984" cy="0.000" r="0.064" fill="blue" stroke="blue"/>
+<path d="M-138.635,0.000 L-120.340,0.000 L-123.517,5.394 L-120.340,0.000 L-123.517,-5.394" fill="none" stroke="teal"/>
+<path d="M160.903,104.274 L166.408,115.794 L162.279,115.613 L166.408,115.794 L168.687,112.414" fill="none" stroke="green"/>
+<circle cx="228.478" cy="0.000" r="1.008" fill="blue" stroke="blue"/>
+<circle cx="289.208" cy="0.000" r="0.170" fill="blue" stroke="blue"/>
+<circle cx="299.926" cy="0.000" r="0.001" fill="blue" stroke="blue"/>
+<circle cx="271.544" cy="0.000" r="0.434" fill="blue" stroke="blue"/>
+<path d="M138.635,0.000 L155.707,0.000 L153.004,4.806 L155.707,0.000 L153.004,-4.806" fill="none" stroke="red"/>
+<path d="M138.635,0.000 L139.245,17.641 L133.934,15.021 L139.245,17.641 L144.085,14.434" fill="none" stroke="olive"/>
+<circle cx="299.453" cy="0.000" r="0.009" fill="blue" stroke="blue"/>
+<path d="M0.000,0.000 L22.458,0.000 L18.737,6.470 L22.458,0.000 L18.737,-6.470" fill="none" stroke="black"/>
+<circle cx="160.903" cy="104.274" r="1.420" fill="black" stroke="black"/>
+<circle cx="138.635" cy="0.000" r="1.887" fill="blue" stroke="blue"/>
+<path d="M60.000,-120.000 L71.377,-105.754 L65.281,-104.689 L71.377,-105.754 L73.436,-111.475" fill="none" stroke="orange"/>
+<circle cx="-228.478" cy="0.000" r="1.008" fill="blue" stroke="blue"/>
+<path d="M60.000,120.000 L71.377,105.754 L73.436,111.475 L71.377,105.754 L65.281,104.689" fill="none" stroke="yellow"/>
+<circle cx="60.000" cy="120.000" r="1.920" fill="black" stroke="black"/>
+<path d="M0.000,0.000 L15.880,15.880 L8.674,17.823 L15.880,15.880 L17.823,8.674" fill="none" stroke="violet"/>
+<circle cx="60.000" cy="-120.000" r="1.920" fill="black" stroke="black"/>
+</g></svg>

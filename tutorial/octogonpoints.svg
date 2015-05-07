@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="900" version="1.1">
+<g transform="translate(450 450) scale(1,-1)"><circle cx="0" cy="0" r="300" fill="none" stroke="black"/><circle cx="193.078" cy="0.000" r="1.406" fill="cyan" stroke="cyan"/>
+<circle cx="136.527" cy="136.527" r="1.406" fill="cyan" stroke="cyan"/>
+<circle cx="-136.527" cy="136.527" r="1.406" fill="cyan" stroke="cyan"/>
+<circle cx="-136.527" cy="-136.527" r="1.406" fill="cyan" stroke="cyan"/>
+<circle cx="136.527" cy="-136.527" r="1.406" fill="cyan" stroke="cyan"/>
+<circle cx="233.066" cy="96.539" r="0.703" fill="black" stroke="black"/>
+<circle cx="96.539" cy="233.066" r="0.703" fill="black" stroke="black"/>
+<circle cx="-96.539" cy="233.066" r="0.703" fill="black" stroke="black"/>
+<circle cx="-233.066" cy="96.539" r="0.703" fill="black" stroke="black"/>
+<circle cx="-233.066" cy="-96.539" r="0.703" fill="black" stroke="black"/>
+<circle cx="-96.539" cy="-233.066" r="0.703" fill="black" stroke="black"/>
+<circle cx="96.539" cy="-233.066" r="0.703" fill="black" stroke="black"/>
+<circle cx="233.066" cy="-96.539" r="0.703" fill="black" stroke="black"/>
+<circle cx="-0.000" cy="-193.078" r="1.406" fill="cyan" stroke="cyan"/>
+<circle cx="0.000" cy="193.078" r="1.406" fill="cyan" stroke="cyan"/>
+<circle cx="-193.078" cy="0.000" r="1.406" fill="cyan" stroke="cyan"/>
+</g></svg>

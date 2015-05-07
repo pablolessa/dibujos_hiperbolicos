@@ -1,0 +1,13 @@
+\pgfdeclarelayer{background}
+\pgfdeclarelayer{foreground}
+\pgfsetlayers{background,main,foreground}
+\begin{tikzpicture}
+\begin{pgfonlayer}{foreground}\draw (0,0) circle (3.0);\end{pgfonlayer}
+
+\begin{pgfonlayer}{background}
+\end{pgfonlayer}
+
+
+\begin{pgfonlayer}{foreground}
+\end{pgfonlayer}
+\end{tikzpicture}

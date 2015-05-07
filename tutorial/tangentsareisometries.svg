@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="900" version="1.1">
+<g transform="translate(450 450) scale(1,-1)"><circle cx="0" cy="0" r="300" fill="none" stroke="black"/><path d="M138.635,0.000 L139.245,17.641 L133.934,15.021 L139.245,17.641 L144.085,14.434" fill="none" stroke="olive"/>
+<path d="M160.903,104.274 L166.408,115.794 L162.279,115.613 L166.408,115.794 L168.687,112.414" fill="none" stroke="green"/>
+<path d="M60.000,120.000 L71.377,105.754 L73.436,111.475 L71.377,105.754 L65.281,104.689" fill="none" stroke="yellow"/>
+<path d="M0.000,0.000 L22.458,0.000 L18.737,6.470 L22.458,0.000 L18.737,-6.470" fill="none" stroke="black"/>
+<path d="M0.000,0.000 L15.880,15.880 L8.674,17.823 L15.880,15.880 L17.823,8.674" fill="none" stroke="violet"/>
+<path d="M-138.635,0.000 L-120.340,0.000 L-123.517,5.394 L-120.340,0.000 L-123.517,-5.394" fill="none" stroke="teal"/>
+<path d="M60.000,-120.000 L71.377,-105.754 L65.281,-104.689 L71.377,-105.754 L73.436,-111.475" fill="none" stroke="orange"/>
+<path d="M138.635,0.000 L155.707,0.000 L153.004,4.806 L155.707,0.000 L153.004,-4.806" fill="none" stroke="red"/>
+</g></svg>

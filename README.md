@@ -1,13 +1,20 @@
 # Dibujos Hiperbólicos
-A Python tool to create drawings in the hyperbolic disk for inclusion in LaTex documents.  
-The output is a Tikz figure (a .pgf file).  
-I usually use KTikz to get eps, pdf, and pgn figures from this.
+
+Dibujos hiperbólicos is a Python tool for creating figures in the Poincaré disk model of the  hyperbolic plane.
+
+The output is either a Tikz figure (a .pgf file to be used with the Tikz LaTex package) or an SVG.
+
+The pgf files outputed can be used directly from LaTex via the Tikz package.  I usually use a program such as KTikz to preview pgf files and get eps, pdf, and pgn figures from them.
+
+The svg format is very well supported by web browsers.  One can also edit and convert these types of files using programs such as Inkscape.
+
+There is a tutorial available but for those who want to see something before going that far we now illustrate some basic usage.
 
 ## Example usage
 
  Example usage:
  Open dibujos.py in Idle and press f5 (run the interactive interpreter).
- 
+
         >>> p1 = Point.frompolar(radius=1,angle=0)
         >>> p2 = Point.frompolar(radius=1,angle = 2*pi/3)
         >>> p3 = Point.frompolar(radius=1,angle = -2*pi/3)
@@ -17,17 +24,15 @@ I usually use KTikz to get eps, pdf, and pgn figures from this.
         >>> f.add(Segment(p3,p1))
         >>> f.writepgf('test.pgf')
 
- This generates the file 'test.pgf' containing a Tikz figure of a hyperbolic triangle.
- The resulting file could be included into a LaTex document directly (using the Tikz package) but 
- it's more convenient to use a program such as KTikz to preview the result and generate png,eps, or pdf files as needed.
- 
+ This generates the file 'test.pgf' containing a Tikz figure of a hyperbolic triangle.  I've used Ktikz on this to generate the png you see below.  Similarly calling "f.writesvg('test.svg')" would generate an SVG figure directly.  Everything written below applies to both methods of output.  The main difference is that complicated figures (i.e. involving the modular group) can hit Tex's 5MB memory limit with their pgf output.  Hence in these situations generating svg files is preferable (programs like Inscape can convert to eps and pdf formats if the intented use is to include the figure in a LaTex document).
+
  ![test.pgn](/test.png)
- 
+
 ## Colors
- 
+
  You can easily change the color of segments or points by changing the color attribute.
  For example:
- 
+
         >>> s1 = Segment(p1,p2)
         >>> s1.color = 'red'
         >>> s2 = Segment(p2,p3)
@@ -66,19 +71,19 @@ I usually use KTikz to get eps, pdf, and pgn figures from this.
  For an example of this inspect the stickmaninmodulargroup() function.
 
         >>> stickmaninmodulargroup()
- 
+
   ![test3.pgn](/test3.png)
 
 
 ## Drawables
- 
+
  The drawable objects are Tangent, Point, Segment, Halfline, Line, Circle, and Disk.
  A Figure is a subclass of Set and is pretty much just a set of drawable objects with a writepgf function.
 
  Points represent points in the hyperbolic plane.  I provide several constructors some examples are:
  Point.frompolar(radius,angle)   constructs from polar coordinates.
  Point.fromupper(complex)    constructs from a point in the upper half plane (complex number)
- 
+
  Another useful way of getting points is by using the .basepoint attribute of a Tangent (more on these later).
  In short if t is Tangent respresenting some tangent vector then t.basepoint is a Point representing its basepoint.
 
@@ -100,19 +105,19 @@ I usually use KTikz to get eps, pdf, and pgn figures from this.
  Other tangents can be constructed conveniently from a series of instructions for example:
 
         >>> Tangent.forward(1)*Tangent.rotate(pi/2)*Tangent.forward(2)
- 
- is the unit tangent vector obtained from Tangent.origin() by going forward along the geodesic flow for 1 unit then turning 
+
+ is the unit tangent vector obtained from Tangent.origin() by going forward along the geodesic flow for 1 unit then turning
  counter-clockwise a right angle and then moving along the geodesic flow for two units.
 
  The tangent vector Tangent.sideways(1) is on the same horocycle of Tangent.origin() and to the right 1 unit (it can also
- be included in multiplication chains as above). 
+ be included in multiplication chains as above).
 
  Any unit tangent vector can be obtained by multiplying those obtained from the given constructors as above.
 
  The basepoint of a tangent vector is an attribute.  For example
 
         >>> Tangent.origin().basepoint
- 
+
  returns the Point representing the center of the disk.
 
  Tangents also act on Points, Segments, Halflines, Lines, Circles, Disks, and Figures by left multiplication.  They act like the unique
@@ -137,19 +142,19 @@ We provide the generator modulargroup(n) for the ball of radius n in the modular
 		>>> g = Figure()
 		>>> stick = Tangent.forward(0.5)*stickman(size=0.3)
 		>>> for t in modulargroup(12):
-				g.update(t*stick)	
+				g.update(t*stick)
 		>>> g.writepgf('test5.pgf')
 
  ![test5.pgn](/test5.png)
 
 ## Layers
 
- Each drawable object belongs to one of the three layers 'background', 'main', or 'foreground' (where main is the middle layer).   
+ Each drawable object belongs to one of the three layers 'background', 'main', or 'foreground' (where main is the middle layer).
  The layer an object belongs to is stored in its .layer attribute and can be changed at will.  
 
  Objects on the same layer will be drawn in a random order (because a figure is a subclass of set Python sets are unordered).  Maybe
  in the future this will be changed by implementing some sort of ordered set subclass (I know there's a recipe for this out there).
- 
+
  For convenience (as with colors) we have provided the functions Background(drawable), Mainlayer(drawable) and Foreground(drawable)
  to change the layer of a drawable object. These can be used at the time of construction or later on.
 
@@ -162,7 +167,7 @@ We provide the generator modulargroup(n) for the ball of radius n in the modular
 		>>> for i in range(20):
 				d = Tangent.rotate(2*pi*i/20)*Tangent.forward(2)*Disk(Point(0),0.6)
 				d.color = choice(['teal','magenta','cyan'])
-				f.add(d)	
+				f.add(d)
 		>>> f.writepgf('test6.pgf')
 
  ![test6.pgn](/test6.png)
@@ -180,6 +185,3 @@ We provide the generator modulargroup(n) for the ball of radius n in the modular
 		>>> f.writepgf('test7.pgf')
 
  ![test7.pgn](/test7.png)
- 
-
-
