@@ -30,7 +30,7 @@ To do this we simply use the .writepgf or .writesvg methods of the Figure class.
     f.writepgf('emptyfigure.pgf')
     f.writesvg('emptyfigure.svg')
 
-The output looks like this (here I'm showing the svg file):
+The output looks like this:
 
 ![emptyfigure.svg](emptyfigure.png)
 
