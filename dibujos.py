@@ -35,6 +35,14 @@ svgdiskradius = 300
 pointsize = 0.016
 tangentsize = 0.15
 
+# Things smaller than this proportion of the radius of the disk are not drawn.
+
+smallestsize = 0.01*2*pi/360
+
+# Geodesic segments who turn less than this angle are drawn as Euclidean segments.
+
+smallestangle = 2*pi/360
+
 # Here we define the following 19 functions:
 # Red Green Blue Cyan Magenta Yellow Black Gray Darkgray Lightgray Brown Lime Olive Orange Pink Purple Teal Violet White
 
@@ -190,6 +198,8 @@ class Tangent(np.matrix):
     def tikzline(self):
         x = pgfdiskradius*complex(self.basepoint)
         y = pgfdiskradius* complex((self*Tangent.forward(tangentsize)).basepoint)
+        if (abs(x-y) < smallestsize*pgfdiskradius):
+            return ''
         left = pgfdiskradius * complex((self*Tangent.forward(tangentsize)*Tangent.rotate(2*pi/3)*Tangent.forward(tangentsize/3)).basepoint)
         right = pgfdiskradius * complex((self*Tangent.forward(tangentsize)*Tangent.rotate(-2*pi/3)*Tangent.forward(tangentsize/3)).basepoint)
         return '\\draw['+self.color+'] '+'({:.3f},{:.3f})'.format(x.real,x.imag) +' -- '+'({:.3f},{:.3f})'.format(y.real,y.imag)+' -- '+'({:.3f},{:.3f})'.format(left.real,left.imag)+' -- '+'({:.3f},{:.3f})'.format(y.real,y.imag)+' -- '+'({:.3f},{:.3f})'.format(right.real,right.imag)+';'
@@ -198,6 +208,8 @@ class Tangent(np.matrix):
     def svgline(self):
         x = svgdiskradius*complex(self.basepoint)
         y = svgdiskradius* complex((self*Tangent.forward(tangentsize)).basepoint)
+        if (abs(x-y) < smallestsize*svgdiskradius):
+            return ''
         left = svgdiskradius * complex((self*Tangent.forward(tangentsize)*Tangent.rotate(2*pi/3)*Tangent.forward(tangentsize/3)).basepoint)
         right = svgdiskradius * complex((self*Tangent.forward(tangentsize)*Tangent.rotate(-2*pi/3)*Tangent.forward(tangentsize/3)).basepoint)
         return '<path d="{}" fill="none" stroke="{}"/>'.format(' L'.join(['M{:.3f},{:.3f}'.format(x.real,x.imag),'{:.3f},{:.3f}'.format(y.real,y.imag), '{:.3f},{:.3f}'.format(left.real,left.imag),'{:.3f},{:.3f}'.format(y.real,y.imag),'{:.3f},{:.3f}'.format(right.real,right.imag) ]), self.color)
@@ -277,6 +289,8 @@ class Point(complex):
 
     @property
     def tikzline(self):
+        if (pointsize/2)*(1-abs(complex(self))**2) < smallestsize:
+            return ''
         x = pgfdiskradius*complex(self)
         size = pgfdiskradius*(pointsize/2)*(pgfdiskradius**2-abs(x)**2)/pgfdiskradius**2
         sizestr = '{:.3f}'.format(size)  
@@ -286,6 +300,8 @@ class Point(complex):
 
     @property
     def svgline(self):
+        if (pointsize/2)*(1-abs(complex(self))**2) < smallestsize:
+            return ''
         x = svgdiskradius*complex(self)
         size = svgdiskradius*(pointsize/2)*(svgdiskradius**2-abs(x)**2)/svgdiskradius**2
         sizestr = '{:.3f}'.format(size)
@@ -363,6 +379,8 @@ class Circle():
         w = complex(Point.frompolar(angle,distance+self.radius))
         center = (z+w)/2
         radius = abs(z - center)
+        if 2*radius < smallestsize:
+            return ''
         radiusstr = '{:.3f}'.format(pgfdiskradius*radius)
         if radiusstr == '0.000':
             return ''               # Avoid outputting circles of radius 0 to the file.
@@ -377,6 +395,8 @@ class Circle():
         centerxstr = '{:.3f}'.format(svgdiskradius*center.real)
         centerystr = '{:.3f}'.format(svgdiskradius*center.imag)
         radius = abs(z - center)
+        if 2*radius < smallestsize:
+            return ''
         radiusstr = '{:.3f}'.format(svgdiskradius*radius)
         if radiusstr == '0.000':
             return ''               # Avoid outputting circles of radius 0 to the file.
@@ -411,6 +431,8 @@ class Disk(Circle):
         w = complex(Point.frompolar(angle,distance+self.radius))
         center = (z+w)/2
         radius = abs(z - center)
+        if 2*radius < smallestsize:
+            return ''
         radiusstr = '{:.3f}'.format(pgfdiskradius*radius)
         if radiusstr == '0.000':
             return ''               # Avoid outputting circles of radius 0 to the file.
@@ -425,6 +447,8 @@ class Disk(Circle):
         centerxstr = '{:.3f}'.format(svgdiskradius*center.real)
         centerystr = '{:.3f}'.format(svgdiskradius*center.imag)
         radius = abs(z - center)
+        if 2*radius < smallestsize:
+            return ''
         radiusstr = '{:.3f}'.format(svgdiskradius*radius)
         if radiusstr == '0.000':
             return ''               # Avoid outputting circles of radius 0 to the file.
@@ -460,41 +484,85 @@ class Segment(object):
         return result
 
     @property
+    def boundarypoints(self):
+        '''Returns the boundary points of the geodesic containing the segment'''
+        start, end = complex(self.start), complex(self.end)
+        startklein, endklein = complex(Point(start).klein), complex(Point(end).klein)
+        a, b, c = abs(endklein-startklein)**2, 2*((endklein-startklein)*startklein.conjugate()).real, abs(startklein)**2 -1
+        tplus, tminus = -b/(2*a) + sqrt(b**2 - 4*a*c)/(2*a), -b/(2*a) - sqrt(b**2 - 4*a*c)/(2*a)
+        startboundary, endboundary = startklein + tminus*(endklein-startklein), startklein + tplus*(endklein-startklein)
+        return Boundarypoint(np.angle(startboundary)),Boundarypoint(np.angle(endboundary))
+
+    @property
+    def center(self):
+        '''Center of the Euclidean circle the segment belongs to.'''
+        boundary1, boundary2 = self.boundarypoints
+        complex1, complex2 = complex(boundary1), complex(boundary2)
+        tangent = tan(np.angle(complex2/complex1)/2)
+        return complex1 + tangent* (complex1*1j)
+
+    @property
     def tikzline(self):
-        start,end = complex(self.start),complex(self.end)
-        subdivisions = int(pgfdiskradius*10*abs(start-end))+10
-        startklein,endklein = complex(Point(start).klein), complex(Point(end).klein)
-        points = [Point.fromklein((1-i/subdivisions)*startklein + i*endklein/subdivisions) for i in range(subdivisions+1)]
-        x = points[0]
-        currentstr = '({:.3f},{:.3f})'.format(pgfdiskradius*x.real,pgfdiskradius*x.imag)
-        pointstrings = [currentstr]
-        for x in points[1:]:
-            pointstr = '({:.3f},{:.3f})'.format(pgfdiskradius*x.real,pgfdiskradius*x.imag)
-            if pointstr != currentstr:              
-                currentstr = pointstr
-                pointstrings.append(currentstr)
-        if len(pointstrings) == 1:
-            return ''   # Avoid outputting segments whose endpoints coincide
-        return '\\draw['+self.color+'] '+' -- '.join(pointstrings)+';'
+        # check if the end points are too close to draw
+        start, end = complex(self.start), complex(self.end)
+        if abs(start-end) < smallestsize:
+            return ''
+        # If they are not get the string for each point.
+        pointstrings = ['({:.3f}, {:.3f})'.format(pgfdiskradius*p.real,pgfdiskradius*p.imag) for p in [start,end]]
+        
+        # check if the boundarypoints are almost opposite so we can draw a straight line
+        boundarypoints = self.boundarypoints
+        boundary1, boundary2 = complex(boundarypoints[0]), complex(boundarypoints[1])
+        if abs(np.angle(-boundary2/boundary1)) < smallestangle:
+            return '\\draw['+self.color+'] '+' -- '.join(pointstrings)+';'
+
+        # If they are not we get the center of the Euclidean circle the geodesic is on.
+        center = self.center
+        radius = pgfdiskradius*abs(start-center)
+        startangle = 360*np.angle(start-center)/(2*pi)
+        # make sure the difference between startangle and endangle is less than 180
+        endangle = startangle + 360*np.angle((end-center)/(start-center))/(2*pi)
+
+        return '\\draw['+self.color+'] '+ pointstrings[0] +' arc ' + '({:.3f}:{:.3f}:{:.3f});'.format(startangle,endangle,radius)
 
     @property
     def svgline(self):
-        start,end = complex(self.start),complex(self.end)
-        subdivisions = int(svgdiskradius*10*abs(start-end))+10
-        startklein,endklein = complex(Point(start).klein), complex(Point(end).klein)
-        points = [Point.fromklein((1-i/subdivisions)*startklein + i*endklein/subdivisions) for i in range(subdivisions+1)]
-        x = points[0]
-        currentstr = 'M{:.3f},{:.3f}'.format(svgdiskradius*x.real,svgdiskradius*x.imag)
-        pointstrings = [currentstr]
-        for x in points[1:]:
-            pointstr = 'L{:.3f},{:.3f}'.format(svgdiskradius*x.real,svgdiskradius*x.imag)
-            if pointstr != currentstr:              
-                currentstr = pointstr
-                pointstrings.append(currentstr)
-        if len(pointstrings) == 1:
-            return ''   # Avoid outputting segments whose endpoints coincide
-        return '<path d="{}" fill="none" stroke="{}"/>'.format(''.join(pointstrings),self.color)
+        # check if the end points are too close to draw
+        start, end = complex(self.start), complex(self.end)
+        if abs(start-end) < smallestsize:
+            return ''
+        # If they are not get the string for each point.
+        pointstrings = ['{:.3f},{:.3f}'.format(svgdiskradius*p.real,svgdiskradius*p.imag) for p in [start,end]]
+        pointstrings[0] = 'M'+pointstrings[0]
+        pointstrings[1] = 'L'+pointstrings[1]
+        
+        # check if the boundarypoints are almost opposite so we can draw a straight line
+        boundarypoints = self.boundarypoints
+        boundary1, boundary2 = complex(boundarypoints[0]), complex(boundarypoints[1])
+        if abs(np.angle(-boundary2/boundary1)) < smallestangle:
+            return '<path d="{}" fill="none" stroke="{}"/>'.format(''.join(pointstrings),self.color)
 
+        # We're not going to line_to so we need to remove the leading L from the string for the second point
+        pointstrings[1] = pointstrings[1][1:]
+
+        # Get the center of the Euclidean circle the geodesic is on.
+        center = self.center
+        radius = svgdiskradius*abs(start-center)
+
+        angle = 360*np.angle((end-center)/(start-center))/(2*pi)
+
+        # Svg needs the start point, endpoint radius (actually x and y radius both equal in our case),
+        # rotation of x axis (0 in our case),
+        # a flag noting if the long arc is drawn or the short one (0 for short arc is always our case),
+        # and one flat determines which side the center is on (the one we will set now)
+        # If you do this wrong either Segment(p,q) or Segment(q,p) will bend in the wrong direction.
+        if angle <= 0:
+            sweepflag = '0'
+        else:
+            sweepflag = '1'
+        d = pointstrings[0]+ ' A{:3f},{:3f} 0 0 {} '.format(radius,radius, sweepflag)+pointstrings[1]
+
+        return '<path d="{}" fill="none" stroke="{}"/>'.format(d,self.color)
 
 
 class Halfline(Segment):
@@ -584,6 +652,94 @@ def modulargroup(n):
                 yield result
                 yield a*result*a
 
+def permutation(genus=2):
+    '''Edge identifications of a 4*genus-gon for constructions of a surface of genus g.
+
+    Labeling the sides 0, 1, 2, .., 4*genus-1 we return a dictionary such that
+    where edge i is identified with edge d[i].
+
+    If genus=2 you get d = {0:2, 2:0, 1:3, 3:1, 4:6, 6:4, 5:7, 7:5}'''
+    d = {0:2, 2:0, 1:3, 3:1}
+    for i in range(1,genus):
+        d[4*i] = 4*i+2
+        d[4*i+1] = 4*i+3
+        d[4*i+2] = 4*i
+        d[4*i+3] = 4*i+1
+    return d
+
+def midpointtangents(genus=2):
+    '''Returns a list of tangents representing outer normals at the midpoints of the sides
+    of a regular 4*genus-gon with interior angles 2*pi/4*genus.'''
+    r = acosh(1/tan(pi/(4*genus)))
+    return [Tangent.rotate(2*pi*i/(4*genus))*Tangent.forward(r) for i in range(4*genus)]
+
+def transformationlist(genus=2):
+    '''Returns a list of Tangents which identify the sides of the 4*genus-gon.
+
+    The i-th transformation sends side permutation(genus)[i] to i.'''
+    midpoints = midpointtangents(genus)
+    perm = permutation(genus)
+
+    return [midpoints[i]*Tangent.rotate(pi)*(midpoints[perm[i]]**(-1)) for i in range(4*genus)]
+
+def getrelations(genus=2):
+    '''Returns a list of tuples of indices which are to be avoided in a product of generators
+    if one wants each element of the surface group to be expressed only once.
+
+    The theoretical justification is what's called Dehn's algorithm.'''
+    perm = permutation(genus)
+    relations = list(perm.items()) # start with the (transformation,inverse) pairs
+    # now add 2*genus+1 counterclockwise turns around each vertex
+    # and the 2*genus clockwise ones
+    for start in range(4*genus):
+        current = start
+        counterclockwise = []
+        for i in range(2*genus+1):
+            counterclockwise.append(current)
+            current = (perm[current]-1)%(4*genus)
+        relations.append(tuple(counterclockwise))
+    
+    for start in range(4*genus):
+        current = start
+        clockwise = []
+        for i in range(2*genus):
+            clockwise.append(current)
+            current = (perm[current]+1)%(4*genus)
+        relations.append(tuple(clockwise))
+    return relations
+
+
+def surfacegroup(n,genus=2):
+    '''Generates the ball of radius n in the fundamental group of the surface of the given genus.'''
+    if n < 0:
+        return
+    perm = permutation(genus)
+    transform = transformationlist(genus)
+    relations = getrelations(genus)
+
+    def tupletotangent(t):
+        result = Tangent.origin()
+        for i in t:
+            result = result*transform[i]
+        return result
+
+# The following implementation sucks harry balls.
+# I should do something smarter e.g. extend tuples from previous generation checking to not add a relation.
+# Or even actually smart (like the finite state machine everybody on the planet knows I should be implementing).
+# It'll still be an exponential runtime but we should be able to go deep enough to get a good picture instantly.
+# Depth 5 seems more or less indistinguishable from infinity in print I think. 
+# Another option (Beneath my dignity?) is to precalculate some moderate good looking depth.
+    for i in range(n+1):
+        for t in product(range(4*genus), repeat= i):   
+            for r in relations:                      
+                if r in [t[i:i+len(r)] for i in range(1+len(t)-len(r))]:
+                    break
+            else:
+                # Para testear las palabras generadas en el bitoro descomentar la siguiente linea
+                #print(''.join(['abABcdCD'[i] for i in t]))
+                yield tupletotangent(t)
+
+
 def stickman(size=1):
     '''Returns a (rudimentary) stickman figure at the origin.'''
     head = Circle((Tangent.rotate(pi/2)*Tangent.forward(0.75*size)).basepoint,0.25*size)
@@ -618,3 +774,22 @@ def stickmaninmodulargroup(n=10,name='test3.pgf'):
         f.update(t*stick)
     
     f.writepgf(name)
+
+def stickmaninsurfacegroup(n=4, name='1'):
+    r = acosh(1/tan(pi/8))
+    t = Tangent.forward(r)*Tangent.rotate(pi/2)*Tangent.forward(r)
+    p = t.basepoint
+    alpha,R = p.polar
+    p = Point.frompolar(angle=alpha,radius=R)
+    points = [Tangent.rotate(2*pi*i/8)*p for i in range(8)]
+    segments = [Segment(points[i],points[(i+1)%8]) for i in range(-1,7)]
+    for i,c in enumerate('red blue red blue orange teal orange teal'.split()):
+        segments[i].color = c
+    s = stickman()
+    s.update([segments[0],segments[1],segments[4],segments[5]])
+    f = Figure()
+    for t in surfacegroup(n):
+        f.update(t*s)
+    f.writepgf(name+'.pgf')
+    f.writesvg(name+'.svg')
+
