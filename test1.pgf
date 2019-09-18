@@ -7,9 +7,9 @@
 \begin{pgfonlayer}{background}
 \end{pgfonlayer}
 
-\draw[orange] (-0.693, 1.201) arc (9.486:-9.486:7.285);
-\draw[blue] (-0.693, -1.201) arc (129.486:110.514:7.285);
-\draw[red] (1.386, 0.000) arc (-110.514:-129.486:7.285);
+\draw[black] (-0.693, -1.201) arc (129.486:110.514:7.285);
+\draw[black] (1.386, 0.000) arc (-110.514:-129.486:7.285);
+\draw[black] (-0.693, 1.201) arc (9.486:-9.486:7.285);
 
 \begin{pgfonlayer}{foreground}
 \draw[fill=black,black] (1.386,0.000) circle (0.019);

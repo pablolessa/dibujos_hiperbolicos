@@ -13,12 +13,10 @@
 
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-'''Dibujos Hiperbólicos: a tool for generating figures of the Poincaré disk model of the hyperbolic plane.'''
+'''Dibujos Hiperbolicos: a tool for generating figures of the Poincaré disk model of the hyperbolic plane.'''
 
-import numpy as np
 from math import *
-from itertools import product
-from random import choice
+import numpy as np
 
 # To begin we define the radii of the boundary circle for pgf and svg output figures.
 # Even though both are vector formats this affects the output because
@@ -27,7 +25,7 @@ from random import choice
 pgfdiskradius = 3.
 svgdiskradius = 300
 
-# The following control the appearance of Point, Boundarypoint, and Tangent drawables.
+# The following control the appearance of Point, Boundarypoint, and Frame drawables.
 # pointsize*pgfdiskradius is the size of a point at the origin or a boundary point in the pgf file.
 # pointsize*svgdiskradius plays a similar role for svg output.
 # tangentsize is a hyperbolic length of arrows used to represent tangent vectors.
@@ -55,7 +53,7 @@ smallestangle = 2*pi/360
 colors = 'red green blue cyan magenta yellow black gray darkgray lightgray brown lime olive orange pink purple teal violet white'.split()
 for c in colors:
     exec('def '+c.capitalize()+'(drawable):\n\tdrawable.color = '+"'"+c+"'"+'\n\t'+'return drawable\n')
-    exec(c.capitalize()+'.__doc__ = '+'"'+c.capitalize()+'(drawable) Changes the .color attribute of the drawable to '+c+'.\\n It also returns the object so, for example, '+c.capitalize()+'(Tangent.origin()) returns a '+c+' tangent object at the origin."')
+    exec(c.capitalize()+'.__doc__ = '+'"'+c.capitalize()+'(drawable) Changes the .color attribute of the drawable to '+c+'.\\n It also returns the object so, for example, '+c.capitalize()+'(Frame.origin()) returns a '+c+' frame object at the origin."')
 
  
 # Similar to the color functions defined above we provide functions to change the .layer attribute of drawables.
@@ -77,15 +75,15 @@ def Background(drawable):
     drawable.layer = 'background'
     return drawable
 
-# Finally, we start with the actual classes.  The drawables are Tangent, Point, Boundarypoint, Circle, Disk, Segment, Halfline, Line.
+# Finally, we start with the actual classes.  The drawables are Frames, Point, Boundarypoint, Circle, Disk, Segment, Halfline, Line.
 # The Figure class is a subclass of set and instances are supposed to hold drawables.
 # In particular if f is a figure you use f.add(drawable) to add a drawable to it but f.update(g) to add all drawables in some other figure g.
 # Each drawable has a .tikzline and a .svgline attribute which are used by the Figure writepgf and writesvg methods respectively.
 
 class Figure(set):
-    '''A figure is a set of Points, Tangents, etc, with a writepgf method to output a pgf file.
+    '''A figure is a set of Points, Frames, etc, with a writepgf method to output a pgf file.
     
-    It can also be acted on by Tangents (as isometries).'''
+    It can also be acted on by Frames (as isometries).'''
     def writepgf(self,filename,drawboundary=True):
         f = open(filename,'w')
         f.write('\\pgfdeclarelayer{background}\n')
@@ -135,21 +133,26 @@ class Figure(set):
     def __rmul__(self,tangent):
         return Figure([tangent*x for x in self])
 
-class Tangent(np.matrix):
-    '''Tangents represent both unit tangent vectors in the disk and hyperbolic isometries.
+class Frame(np.matrix):
+    '''Frames represent both orthonormal tangent frames in the disk and hyperbolic isometries.
     
-    Hence they can be drawn (as a small arrow) but also can act by multiplication on other drawables (including other tangents)
-    Several constructors are provided.  Tangent.origin(), Tangent.forward(d), Tangent.rotate(a), Tangent.sideways(d).
-    A useful pattern is to create a tangent out of "instructions" e.g. t = Tangent.forward(1)*Tangent.rotate(pi/2)*Tangent.forward(2)*Tangent.rotate(pi/3).'''
+    Hence they can be drawn but also can act by multiplication on other drawables (including other frames)
+    Several constructors are provided.  Frame.origin(), Frame.forward(d), Frame.rotate(a), Frame.sideways(d).
+    A useful pattern is to create a tangent out of "instructions" e.g. t = Frame.forward(1)*Frame.rotate(pi/2)*Frame.forward(2)*Frame.rotate(pi/3).'''
     def __array_finalize__(self,*args,**kwargs):
         self.color = 'black'
         self.layer = 'foreground'
+        self.orientation = 1
 
     def __mul__(self,other):
-        if type(self) != type(other):
+        if not isinstance(other,type(self)):
             return NotImplemented
         else:
-            result = super().__mul__(other)
+            if self.orientation == -1:
+                result = super().__mul__(other.conjugate())
+            else:
+                result = super().__mul__(other)
+            result.orientation = self.orientation*other.orientation
             result.color = other.color
             result.layer = other.layer
             return result
@@ -158,7 +161,7 @@ class Tangent(np.matrix):
         return hash(str(self))
 
     def __eq__(self,other):
-        return self[0,0] == other[0,0] and self[0,1] == other[0,1] and self[1,0] == other[1,0] and self[1,1] == other[1,1] and self.color == other.color and self.layer == other.layer
+        return self[0,0] == other[0,0] and self[0,1] == other[0,1] and self[1,0] == other[1,0] and self[1,1] == other[1,1] and self.orientation == other.orientation and self.color == other.color and self.layer == other.layer and self.orientation == other.orientation
 
     @classmethod
     def fromrealmatrix(cls,matrix):
@@ -167,60 +170,128 @@ class Tangent(np.matrix):
         halfplanetodisk = np.matrix([[1., -1j], [1., 1j]])
         disktohalfplane = halfplanetodisk.getI()
         result = halfplanetodisk * matrix * disktohalfplane
-        return cls([ [result[0,0],result[0,1]],[result[1,0],result[1,1]] ])
+        s = cls([ [result[0,0],result[0,1]],[result[1,0],result[1,1]] ])
+        s.orientation = +1
+        return s
+
 
     @classmethod
     def origin(cls):
-        '''At the origin of the Poincaré disk looking right (i.e. towards positive reals).'''
-        return cls([[1.,0.],[0.,1.]])
+        '''At the origin of the Poincaré disk first vector looking right, second looking up.'''
+        s = cls([[1.,0.],[0.,1.]])
+        s.orientation = +1
+        return s
+
+    @classmethod
+    def flip(cls):
+        '''At the origin with the first vector looking right, and the second down.'''
+        s = cls([[1.,0.],[0.,1.]])
+        s.orientation = -1
+        return s
 
     @classmethod
     def forward(cls,distance):
-        '''Move forward a distance (or backward if distance is negative).'''
-        return cls.fromrealmatrix(np.matrix([[exp(distance/2),0.], [0., exp(-distance/2)]]))
+        '''Right multiplication by this moves the frame forward in direction of the first vector.'''
+        s = cls.fromrealmatrix(np.matrix([[exp(distance/2),0.], [0., exp(-distance/2)]]))
+        s.orientation = +1
+        return s
 
     @classmethod
     def rotate(cls,angle):
-        '''Rotate an angle counterclockwise.'''
-        return cls([[cos(angle)+sin(angle)*1j,0.],[0.,1.]])
+        '''Right multiplication rotates the frame in place counterclockwise.'''
+        s = cls([[cos(angle)+sin(angle)*1j,0.],[0.,1.]])
+        s.orientation = +1
+        return s
 
     @classmethod
     def sideways(cls,distance):
-        '''Move right a certain distance (or left if distance is negative) while looking at the same point on the horizon.'''
-        return cls.fromrealmatrix(np.matrix([[1.,distance], [0., 1.]]))
+        '''Right multiplication moves the frame right along the horocycle determined by the first vector.'''
+        s = cls.fromrealmatrix(np.matrix([[1.,distance], [0., 1.]]))
+        s.orientation = +1
+        return s
 
     @property
     def basepoint(self):
+        '''The basepoint of the frame in the disk.'''
         a,b,c,d = self[0,0],self[0,1],self[1,0],self[1,1]
         return Point(b/d)
 
     @property
     def tikzline(self):
+        # first we generate a picture of the first vector in the frame
         x = pgfdiskradius*complex(self.basepoint)
-        y = pgfdiskradius* complex((self*Tangent.forward(tangentsize)).basepoint)
+        y = pgfdiskradius* complex((self*Frame.forward(tangentsize)).basepoint)
         if (abs(x-y) < smallestsize*pgfdiskradius):
             return ''
-        left = pgfdiskradius * complex((self*Tangent.forward(tangentsize)*Tangent.rotate(2*pi/3)*Tangent.forward(tangentsize/3)).basepoint)
-        right = pgfdiskradius * complex((self*Tangent.forward(tangentsize)*Tangent.rotate(-2*pi/3)*Tangent.forward(tangentsize/3)).basepoint)
+        left = pgfdiskradius * complex((self*Frame.forward(tangentsize)*Frame.rotate(2*pi/3)*Frame.forward(tangentsize/3)).basepoint)
+        right = pgfdiskradius * complex((self*Frame.forward(tangentsize)*Frame.rotate(-2*pi/3)*Frame.forward(tangentsize/3)).basepoint)
+        line = '\\draw['+self.color+'] '+'({:.3f},{:.3f})'.format(x.real,x.imag) +' -- '+'({:.3f},{:.3f})'.format(y.real,y.imag)+' -- '+'({:.3f},{:.3f})'.format(left.real,left.imag)+' -- '+'({:.3f},{:.3f})'.format(y.real,y.imag)+' -- '+'({:.3f},{:.3f})'.format(right.real,right.imag)+';'
+        # now we repeat rotated a right angle for the second vector
+        x = pgfdiskradius*complex(self.basepoint)
+        y = pgfdiskradius* complex((self*Frame.rotate(pi/2)*Frame.forward(tangentsize)).basepoint)
+        if (abs(x-y) < smallestsize*pgfdiskradius):
+            return ''
+        left = pgfdiskradius * complex((self*Frame.rotate(pi/2)*Frame.forward(tangentsize)*Frame.rotate(2*pi/3)*Frame.forward(tangentsize/3)).basepoint)
+        right = pgfdiskradius * complex((self*Frame.rotate(pi/2)*Frame.forward(tangentsize)*Frame.rotate(-2*pi/3)*Frame.forward(tangentsize/3)).basepoint)
+        return line + '\\draw['+self.color+'] '+'({:.3f},{:.3f})'.format(x.real,x.imag) +' -- '+'({:.3f},{:.3f})'.format(y.real,y.imag)+' -- '+'({:.3f},{:.3f})'.format(left.real,left.imag)+' -- '+'({:.3f},{:.3f})'.format(y.real,y.imag)+' -- '+'({:.3f},{:.3f})'.format(right.real,right.imag)+';'
+
+    @property
+    def svgline(self):
+        # first we generate a picture of the first vector in the frame
+        x = svgdiskradius*complex(self.basepoint)
+        y = svgdiskradius* complex((self*Frame.forward(tangentsize)).basepoint)
+        if (abs(x-y) < smallestsize*svgdiskradius):
+            return ''
+        left = svgdiskradius * complex((self*Frame.forward(tangentsize)*Frame.rotate(2*pi/3)*Frame.forward(tangentsize/3)).basepoint)
+        right = svgdiskradius * complex((self*Frame.forward(tangentsize)*Frame.rotate(-2*pi/3)*Frame.forward(tangentsize/3)).basepoint)
+        line = '<path d="{}" fill="none" stroke="{}"/>'.format(' L'.join(['M{:.3f},{:.3f}'.format(x.real,x.imag),'{:.3f},{:.3f}'.format(y.real,y.imag), '{:.3f},{:.3f}'.format(left.real,left.imag),'{:.3f},{:.3f}'.format(y.real,y.imag),'{:.3f},{:.3f}'.format(right.real,right.imag) ]), self.color)
+        # now we repeat rotated a right angle for the second vector
+        x = svgdiskradius*complex(self.basepoint)
+        y = svgdiskradius* complex((self*Frame.rotate(pi/2)*Frame.forward(tangentsize)).basepoint)
+        if (abs(x-y) < smallestsize*svgdiskradius):
+            return ''
+        left = svgdiskradius * complex((self*Frame.rotate(pi/2)*Frame.forward(tangentsize)*Frame.rotate(2*pi/3)*Frame.forward(tangentsize/3)).basepoint)
+        right = svgdiskradius * complex((self*Frame.rotate(pi/2)*Frame.forward(tangentsize)*Frame.rotate(-2*pi/3)*Frame.forward(tangentsize/3)).basepoint)
+        return line + '<path d="{}" fill="none" stroke="{}"/>'.format(' L'.join(['M{:.3f},{:.3f}'.format(x.real,x.imag),'{:.3f},{:.3f}'.format(y.real,y.imag), '{:.3f},{:.3f}'.format(left.real,left.imag),'{:.3f},{:.3f}'.format(y.real,y.imag),'{:.3f},{:.3f}'.format(right.real,right.imag) ]), self.color)
+
+class Tangent(Frame):
+    '''Unit tangent vector.  Implemented as a frame that doesn't draw its second vector'''
+    def __rmul__(self,frame):
+        '''I have absolutely no idea what I'm doing.'''
+        partial = frame.__mul__(self)
+        a,b,c,d = partial[0,0],partial[0,1],partial[1,0],partial[1,1]
+        result = Tangent([[a,b],[c,d]])
+        result.orientation = partial.orientation
+        result.color = partial.color
+        result.layer = partial.layer
+        return result
+    
+    @property
+    def tikzline(self):
+        x = pgfdiskradius*complex(self.basepoint)
+        y = pgfdiskradius* complex((self*Frame.forward(tangentsize)).basepoint)
+        if abs(x-y) < smallestsize*pgfdiskradius:
+            return ''
+        left = pgfdiskradius * complex((self*Frame.forward(tangentsize)*Frame.rotate(2*pi/3)*Frame.forward(tangentsize/3)).basepoint)
+        right = pgfdiskradius * complex((self*Frame.forward(tangentsize)*Frame.rotate(-2*pi/3)*Frame.forward(tangentsize/3)).basepoint)
         return '\\draw['+self.color+'] '+'({:.3f},{:.3f})'.format(x.real,x.imag) +' -- '+'({:.3f},{:.3f})'.format(y.real,y.imag)+' -- '+'({:.3f},{:.3f})'.format(left.real,left.imag)+' -- '+'({:.3f},{:.3f})'.format(y.real,y.imag)+' -- '+'({:.3f},{:.3f})'.format(right.real,right.imag)+';'
 
     @property
     def svgline(self):
         x = svgdiskradius*complex(self.basepoint)
-        y = svgdiskradius* complex((self*Tangent.forward(tangentsize)).basepoint)
-        if (abs(x-y) < smallestsize*svgdiskradius):
+        y = svgdiskradius* complex((self*Frame.forward(tangentsize)).basepoint)
+        if abs(x-y) < smallestsize*svgdiskradius:
             return ''
-        left = svgdiskradius * complex((self*Tangent.forward(tangentsize)*Tangent.rotate(2*pi/3)*Tangent.forward(tangentsize/3)).basepoint)
-        right = svgdiskradius * complex((self*Tangent.forward(tangentsize)*Tangent.rotate(-2*pi/3)*Tangent.forward(tangentsize/3)).basepoint)
+        left = svgdiskradius * complex((self*Frame.forward(tangentsize)*Frame.rotate(2*pi/3)*Frame.forward(tangentsize/3)).basepoint)
+        right = svgdiskradius * complex((self*Frame.forward(tangentsize)*Frame.rotate(-2*pi/3)*Frame.forward(tangentsize/3)).basepoint)
         return '<path d="{}" fill="none" stroke="{}"/>'.format(' L'.join(['M{:.3f},{:.3f}'.format(x.real,x.imag),'{:.3f},{:.3f}'.format(y.real,y.imag), '{:.3f},{:.3f}'.format(left.real,left.imag),'{:.3f},{:.3f}'.format(y.real,y.imag),'{:.3f},{:.3f}'.format(right.real,right.imag) ]), self.color)
-
 
 class Point(complex):
     '''A point in the Poincaré disk model of the hyperbolic plane.
     
     Basically a complex number of modulus less than 1.
     You can construct them with modulus 1 (points at infinity or boundary points),
-    But some methods (such as p.hyperboloid) will fail (yielding infinite values.'''
+    But some methods (such as p.hyperboloid) will fail (yielding infinite values).'''
 
     def __init__(self,*args,**kwargs):
         self.color = 'black'
@@ -245,7 +316,7 @@ class Point(complex):
 
     @classmethod
     def frompolar(cls,angle = 0., radius =0.):
-        return (Tangent.rotate(angle)*Tangent.forward(radius)).basepoint
+        return (Frame.rotate(angle)*Frame.forward(radius)).basepoint
 
     @property
     def disk(self):
@@ -309,10 +380,13 @@ class Point(complex):
             return ''                       # We avoid outputting points of radius (0.000).
         return '<circle cx="{:.3f}" cy="{:.3f}" r="{:.3f}" fill="{}" stroke="{}"/>'.format(x.real,x.imag,size,self.color,self.color)
 
-    def __rmul__(self,tangent):
-        '''Tangents acting on points as isometries.'''
-        a,b,c,d = tangent[0,0],tangent[0,1],tangent[1,0],tangent[1,1]
-        z = complex(self)
+    def __rmul__(self,frame):
+        '''Frames acting on points as isometries.'''
+        a,b,c,d = frame[0,0],frame[0,1],frame[1,0],frame[1,1]
+        if frame.orientation == -1:
+            z = complex(self).conjugate()
+        else:
+            z = complex(self)
         result = Point((a*z+b)/(c*z+d))
         result.color = self.color
         result.layer = self.layer
@@ -349,10 +423,13 @@ class Boundarypoint():
         size = svgdiskradius*(pointsize/2)
         return '<circle cx="{:.3f}" cy="{:.3f}" r="{:.3f}" fill="{}" stroke="{}"/>'.format(x.real,x.imag,size,self.color,self.color)
 
-    def __rmul__(self,tangent):
-        '''Tangents acting on points as isometries.'''
-        a,b,c,d = tangent[0,0],tangent[0,1],tangent[1,0],tangent[1,1]
-        z = complex(self)
+    def __rmul__(self,frame):
+        '''Frames acting on points as isometries.'''
+        a,b,c,d = frame[0,0],frame[0,1],frame[1,0],frame[1,1]
+        if frame.orientation == -1:
+            z = complex(self).conjugate()
+        else:
+            z = complex(self)
         result = Boundarypoint(np.angle((a*z+b)/(c*z+d)))
         result.color = self.color
         result.layer = self.layer
@@ -403,9 +480,9 @@ class Circle():
         return '<circle cx="{}" cy="{}" r="{}" fill="none" stroke="{}"/>'.format(centerxstr,centerystr,radiusstr,self.color)
         
 
-    def __rmul__(self,tangent):
-        '''Tangents acting on points as isometries.'''
-        result = Circle(tangent*self.center,self.radius)
+    def __rmul__(self,frame):
+        '''Frames acting on points as isometries.'''
+        result = Circle(frame*self.center,self.radius)
         result.color = self.color
         result.layer = self.layer
         return result
@@ -455,9 +532,9 @@ class Disk(Circle):
         return '<circle cx="{}" cy="{}" r="{}" fill="{}" stroke="{}"/>'.format(centerxstr,centerystr,radiusstr,self.color,self.color)
 
 
-    def __rmul__(self,tangent):
-        '''Tangents acting on points as isometries.'''
-        result = Disk(tangent*self.center,self.radius)
+    def __rmul__(self,frame):
+        '''Frames acting on points as isometries.'''
+        result = Disk(frame*self.center,self.radius)
         result.color = self.color
         result.layer = self.layer
         return result
@@ -477,8 +554,9 @@ class Segment(object):
     def __repr__(self):
         return repr((self.start,self.end))
 
-    def __rmul__(self,tangent):
-        result = Segment(tangent*self.start,tangent*self.end)
+    def __rmul__(self,frame):
+        '''Frames act on segments as isometries.'''
+        result = Segment(frame*self.start,frame*self.end)
         result.color = self.color
         result.layer = self.layer
         return result
@@ -566,11 +644,11 @@ class Segment(object):
 
 
 class Halfline(Segment):
-    '''An infinite halfline starting at a tangent's basepoint and extending in the direction given by the tangent.'''
-    def __init__(self,tangent):
-        self.start = tangent.basepoint
+    '''An infinite halfline starting at a frame's basepoint and extending in the direction given by the first vector.'''
+    def __init__(self,frame):
+        self.start = frame.basepoint
         start = self.start
-        forward = (tangent * Tangent.forward(1)).basepoint
+        forward = (frame * Frame.forward(1)).basepoint
         z = complex(start.klein)
         w = complex(forward.klein)
         u = w-z
@@ -585,23 +663,24 @@ class Halfline(Segment):
 
     @classmethod
     def fromtwopoints(cls,start,end):
-        self = Halfline(Tangent.origin())
+        self = Halfline(Frame.origin())
         self.start = start
         self.end = end
         self.color = 'black'
         return self
 
-    def __rmul__(self,tangent):
-        result = Halfline.fromtwopoints(tangent*self.start,tangent*self.end)
+    def __rmul__(self,frame):
+        '''Frames act on Halflines by isometry.'''
+        result = Halfline.fromtwopoints(frame*self.start,frame*self.end)
         result.color = self.color
         result.layer = self.layer
         return result
 
 class Line(Segment):
-    '''An infinite line through a given tangent vector.'''
-    def __init__(self,tangent):
-        base = tangent.basepoint
-        forward = (tangent * Tangent.forward(1)).basepoint
+    '''An infinite line in direction of the first vector of a frame.'''
+    def __init__(self,frame):
+        base = frame.basepoint
+        forward = (frame * Frame.forward(1)).basepoint
         z = complex(base.klein)
         w = complex(forward.klein)
         u = w-z
@@ -619,177 +698,28 @@ class Line(Segment):
 
     @classmethod
     def fromtwopoints(cls,start,end):
-        self = Line(Tangent.origin())
+        self = Line(Frame.origin())
         self.start = start
         self.end = end
         self.color = 'black'
         return self
 
-    def __rmul__(self,tangent):
-        result = Line.fromtwopoints(tangent*self.start,tangent*self.end)
+    def __rmul__(self,frame):
+        result = Line.fromtwopoints(frame*self.start,frame*self.end)
         result.color = self.color
         result.layer = self.layer
         return result
-
-
-def modulargroup(n):
-    '''Generator for elements of length n or less in the modular group.
-
-    The generating set is {a = Tangent.rotate(pi), b=Tangent.rotate(pi)*Tangent.sideways(1), b**2}.'''
-    a = Tangent.rotate(pi)
-    b = Tangent.rotate(pi)*Tangent.sideways(1)
-    B = [b,b**2]
-    for length in range(n):
-        for bees in product(B,repeat=length//2):
-            result = Tangent.origin()
-            for x in bees:
-                result = result * x * a
-            if length%2 == 1:
-                yield a * result
-                yield result * b
-                yield result * b**2
-            else:
-                yield result
-                yield a*result*a
-
-def permutation(genus=2):
-    '''Edge identifications of a 4*genus-gon for constructions of a surface of genus g.
-
-    Labeling the sides 0, 1, 2, .., 4*genus-1 we return a dictionary such that
-    where edge i is identified with edge d[i].
-
-    If genus=2 you get d = {0:2, 2:0, 1:3, 3:1, 4:6, 6:4, 5:7, 7:5}'''
-    d = {0:2, 2:0, 1:3, 3:1}
-    for i in range(1,genus):
-        d[4*i] = 4*i+2
-        d[4*i+1] = 4*i+3
-        d[4*i+2] = 4*i
-        d[4*i+3] = 4*i+1
-    return d
-
-def midpointtangents(genus=2):
-    '''Returns a list of tangents representing outer normals at the midpoints of the sides
-    of a regular 4*genus-gon with interior angles 2*pi/4*genus.'''
-    r = acosh(1/tan(pi/(4*genus)))
-    return [Tangent.rotate(2*pi*i/(4*genus))*Tangent.forward(r) for i in range(4*genus)]
-
-def transformationlist(genus=2):
-    '''Returns a list of Tangents which identify the sides of the 4*genus-gon.
-
-    The i-th transformation sends side permutation(genus)[i] to i.'''
-    midpoints = midpointtangents(genus)
-    perm = permutation(genus)
-
-    return [midpoints[i]*Tangent.rotate(pi)*(midpoints[perm[i]]**(-1)) for i in range(4*genus)]
-
-def getrelations(genus=2):
-    '''Returns a list of tuples of indices which are to be avoided in a product of generators
-    if one wants each element of the surface group to be expressed only once.
-
-    The theoretical justification is what's called Dehn's algorithm.'''
-    perm = permutation(genus)
-    relations = list(perm.items()) # start with the (transformation,inverse) pairs
-    # now add 2*genus+1 counterclockwise turns around each vertex
-    # and the 2*genus clockwise ones
-    for start in range(4*genus):
-        current = start
-        counterclockwise = []
-        for i in range(2*genus+1):
-            counterclockwise.append(current)
-            current = (perm[current]-1)%(4*genus)
-        relations.append(tuple(counterclockwise))
     
-    for start in range(4*genus):
-        current = start
-        clockwise = []
-        for i in range(2*genus):
-            clockwise.append(current)
-            current = (perm[current]+1)%(4*genus)
-        relations.append(tuple(clockwise))
-    return relations
-
-
-def surfacegroup(n,genus=2):
-    '''Generates the ball of radius n in the fundamental group of the surface of the given genus.'''
-    if n < 0:
-        return
-    perm = permutation(genus)
-    transform = transformationlist(genus)
-    relations = getrelations(genus)
-
-    def tupletotangent(t):
-        result = Tangent.origin()
-        for i in t:
-            result = result*transform[i]
-        return result
-
-# The following implementation sucks harry balls.
-# I should do something smarter e.g. extend tuples from previous generation checking to not add a relation.
-# Or even actually smart (like the finite state machine everybody on the planet knows I should be implementing).
-# It'll still be an exponential runtime but we should be able to go deep enough to get a good picture instantly.
-# Depth 5 seems more or less indistinguishable from infinity in print I think. 
-# Another option (Beneath my dignity?) is to precalculate some moderate good looking depth.
-    for i in range(n+1):
-        for t in product(range(4*genus), repeat= i):   
-            for r in relations:                      
-                if r in [t[i:i+len(r)] for i in range(1+len(t)-len(r))]:
-                    break
-            else:
-                # Para testear las palabras generadas en el bitoro descomentar la siguiente linea
-                #print(''.join(['abABcdCD'[i] for i in t]))
-                yield tupletotangent(t)
-
-
 def stickman(size=1):
     '''Returns a (rudimentary) stickman figure at the origin.'''
-    head = Circle((Tangent.rotate(pi/2)*Tangent.forward(0.75*size)).basepoint,0.25*size)
-    stick = Segment(Point(0),(Tangent.rotate(pi/2)*Tangent.forward(0.5*size)).basepoint)
-    leftleg = Segment(Point(0),(Tangent.rotate(-pi/3)*Tangent.forward(0.5*size)).basepoint)
-    rightleg = Segment(Point(0),(Tangent.rotate(-pi/2 - pi/10)*Tangent.forward(0.5*size)).basepoint)
-    armbase = (Tangent.rotate(pi/2)*Tangent.forward(0.4*size)).basepoint
-    leftarmend = (Tangent.rotate(pi/2)*Tangent.forward(0.4*size)*Tangent.rotate(-2*pi/3)*Tangent.forward(0.4*size)).basepoint
-    rightarmend = (Tangent.rotate(pi/2)*Tangent.forward(0.4*size)*Tangent.rotate(-pi-pi/10)*Tangent.forward(0.4*size)).basepoint
+    head = Circle((Frame.rotate(pi/2)*Frame.forward(0.75*size)).basepoint,0.25*size)
+    stick = Segment(Point(0),(Frame.rotate(pi/2)*Frame.forward(0.5*size)).basepoint)
+    leftleg = Segment(Point(0),(Frame.rotate(-pi/3)*Frame.forward(0.5*size)).basepoint)
+    rightleg = Segment(Point(0),(Frame.rotate(-pi/2 - pi/10)*Frame.forward(0.5*size)).basepoint)
+    armbase = (Frame.rotate(pi/2)*Frame.forward(0.4*size)).basepoint
+    leftarmend = (Frame.rotate(pi/2)*Frame.forward(0.4*size)*Frame.rotate(-2*pi/3)*Frame.forward(0.4*size)).basepoint
+    rightarmend = (Frame.rotate(pi/2)*Frame.forward(0.4*size)*Frame.rotate(-pi-pi/10)*Frame.forward(0.4*size)).basepoint
     leftarm = Segment(armbase,leftarmend)
     rightarm = Segment(armbase,rightarmend)
     eye = Disk(Point.frompolar(angle=pi/2-pi/20, radius=0.8*size),radius=0.02*size)
     return Figure([head,stick,rightleg,leftleg,leftarm,rightarm,eye])
-
-def stickmaninmodulargroup(n=10,name='test3.pgf'):
-    '''An example test figure.  A stickman in the modular group.''' 
-    left = Point.fromhalfplane(-0.5*0.95+1.05*sin(acos(0.5))*1j)
-    right = Point.fromhalfplane(0.5*0.95+1.05*sin(acos(0.5))*1j)
-    stick = Tangent.forward(0.3)*stickman(0.3)
-    seg = Segment(left,right)
-    seg.color = 'red'
-    righthalf = Segment(right,Point(0.999))
-    righthalf.color = 'blue'
-    lefthalf = Segment(left,Point(0.999))
-    lefthalf.color = 'green'
-
-    f = Figure()
-    for t in modulargroup(n):
-        f.add(t*seg)
-        f.add(t*lefthalf)
-        f.add(t*righthalf)
-        f.update(t*stick)
-    
-    f.writepgf(name)
-
-def stickmaninsurfacegroup(n=4, name='1'):
-    r = acosh(1/tan(pi/8))
-    t = Tangent.forward(r)*Tangent.rotate(pi/2)*Tangent.forward(r)
-    p = t.basepoint
-    alpha,R = p.polar
-    p = Point.frompolar(angle=alpha,radius=R)
-    points = [Tangent.rotate(2*pi*i/8)*p for i in range(8)]
-    segments = [Segment(points[i],points[(i+1)%8]) for i in range(-1,7)]
-    for i,c in enumerate('red blue red blue orange teal orange teal'.split()):
-        segments[i].color = c
-    s = stickman()
-    s.update([segments[0],segments[1],segments[4],segments[5]])
-    f = Figure()
-    for t in surfacegroup(n):
-        f.update(t*s)
-    f.writepgf(name+'.pgf')
-    f.writesvg(name+'.svg')
-
