@@ -24,7 +24,7 @@ The svg format is very well supported by web browsers.  One can also edit and co
 
  This generates the file 'test.pgf' containing a Tikz figure of a hyperbolic triangle.  I've used Ktikz on this to generate the png you see below.  Similarly calling "f.writesvg('test.svg')" would generate an SVG figure directly.  Everything written below applies to both methods of output.  The main difference is that complicated figures can hit Tex's 5MB memory limit with their pgf output.  Hence in these situations generating svg files is preferable (programs like Inscape can convert to eps and pdf formats if the intended use is to include the figure in a LaTex document).
 
- ![test.pgn](/test.png)
+ ![test.pgn](/test1.png)
 
 ## Colors
 
