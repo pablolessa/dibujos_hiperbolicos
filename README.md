@@ -190,5 +190,5 @@ The program modulargroup.py contains a generator for the modulargroup and a func
 
 The program triangles.py is a very hacky implementation of triangle groups.  At least its possible to experiment with the parameters l,m,n, to illustrate different groups (here l,m,n are natural numbers and their inverses add up to less than one half).
 
-![triangles.png](/triangles.py)
+![triangles.png](/triangles.png)
 
